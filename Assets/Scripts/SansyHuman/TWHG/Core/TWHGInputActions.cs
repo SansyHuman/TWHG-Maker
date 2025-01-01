@@ -48,6 +48,15 @@ namespace SansyHuman.TWHG.Core
                     ""initialStateCheck"": false
                 },
                 {
+                    ""name"": ""ScreenNegClick"",
+                    ""type"": ""Button"",
+                    ""id"": ""6b59f66a-e26d-4d9c-8e2a-458c9f66c378"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
                     ""name"": ""ScreenMag"",
                     ""type"": ""Value"",
                     ""id"": ""24155618-3b78-43e7-8ec2-2e23f9792c4b"",
@@ -64,6 +73,15 @@ namespace SansyHuman.TWHG.Core
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Alt"",
+                    ""type"": ""Button"",
+                    ""id"": ""c35a32a1-e05f-4209-813d-7105f3752876"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -154,6 +172,28 @@ namespace SansyHuman.TWHG.Core
                     ""action"": ""Move"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""72a21f98-4cdf-46f9-887d-deee6cf9ff69"",
+                    ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""PC"",
+                    ""action"": ""ScreenNegClick"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""ea1ae2e7-b9e9-4086-a84a-f0421d9afbec"",
+                    ""path"": ""<Keyboard>/alt"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""PC"",
+                    ""action"": ""Alt"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -181,8 +221,10 @@ namespace SansyHuman.TWHG.Core
             m_Editor = asset.FindActionMap("Editor", throwIfNotFound: true);
             m_Editor_PointerPosition = m_Editor.FindAction("PointerPosition", throwIfNotFound: true);
             m_Editor_ScreenClick = m_Editor.FindAction("ScreenClick", throwIfNotFound: true);
+            m_Editor_ScreenNegClick = m_Editor.FindAction("ScreenNegClick", throwIfNotFound: true);
             m_Editor_ScreenMag = m_Editor.FindAction("ScreenMag", throwIfNotFound: true);
             m_Editor_Move = m_Editor.FindAction("Move", throwIfNotFound: true);
+            m_Editor_Alt = m_Editor.FindAction("Alt", throwIfNotFound: true);
         }
 
         public void Dispose()
@@ -246,16 +288,20 @@ namespace SansyHuman.TWHG.Core
         private List<IEditorActions> m_EditorActionsCallbackInterfaces = new List<IEditorActions>();
         private readonly InputAction m_Editor_PointerPosition;
         private readonly InputAction m_Editor_ScreenClick;
+        private readonly InputAction m_Editor_ScreenNegClick;
         private readonly InputAction m_Editor_ScreenMag;
         private readonly InputAction m_Editor_Move;
+        private readonly InputAction m_Editor_Alt;
         public struct EditorActions
         {
             private @TWHGInputActions m_Wrapper;
             public EditorActions(@TWHGInputActions wrapper) { m_Wrapper = wrapper; }
             public InputAction @PointerPosition => m_Wrapper.m_Editor_PointerPosition;
             public InputAction @ScreenClick => m_Wrapper.m_Editor_ScreenClick;
+            public InputAction @ScreenNegClick => m_Wrapper.m_Editor_ScreenNegClick;
             public InputAction @ScreenMag => m_Wrapper.m_Editor_ScreenMag;
             public InputAction @Move => m_Wrapper.m_Editor_Move;
+            public InputAction @Alt => m_Wrapper.m_Editor_Alt;
             public InputActionMap Get() { return m_Wrapper.m_Editor; }
             public void Enable() { Get().Enable(); }
             public void Disable() { Get().Disable(); }
@@ -271,12 +317,18 @@ namespace SansyHuman.TWHG.Core
                 @ScreenClick.started += instance.OnScreenClick;
                 @ScreenClick.performed += instance.OnScreenClick;
                 @ScreenClick.canceled += instance.OnScreenClick;
+                @ScreenNegClick.started += instance.OnScreenNegClick;
+                @ScreenNegClick.performed += instance.OnScreenNegClick;
+                @ScreenNegClick.canceled += instance.OnScreenNegClick;
                 @ScreenMag.started += instance.OnScreenMag;
                 @ScreenMag.performed += instance.OnScreenMag;
                 @ScreenMag.canceled += instance.OnScreenMag;
                 @Move.started += instance.OnMove;
                 @Move.performed += instance.OnMove;
                 @Move.canceled += instance.OnMove;
+                @Alt.started += instance.OnAlt;
+                @Alt.performed += instance.OnAlt;
+                @Alt.canceled += instance.OnAlt;
             }
 
             private void UnregisterCallbacks(IEditorActions instance)
@@ -287,12 +339,18 @@ namespace SansyHuman.TWHG.Core
                 @ScreenClick.started -= instance.OnScreenClick;
                 @ScreenClick.performed -= instance.OnScreenClick;
                 @ScreenClick.canceled -= instance.OnScreenClick;
+                @ScreenNegClick.started -= instance.OnScreenNegClick;
+                @ScreenNegClick.performed -= instance.OnScreenNegClick;
+                @ScreenNegClick.canceled -= instance.OnScreenNegClick;
                 @ScreenMag.started -= instance.OnScreenMag;
                 @ScreenMag.performed -= instance.OnScreenMag;
                 @ScreenMag.canceled -= instance.OnScreenMag;
                 @Move.started -= instance.OnMove;
                 @Move.performed -= instance.OnMove;
                 @Move.canceled -= instance.OnMove;
+                @Alt.started -= instance.OnAlt;
+                @Alt.performed -= instance.OnAlt;
+                @Alt.canceled -= instance.OnAlt;
             }
 
             public void RemoveCallbacks(IEditorActions instance)
@@ -323,8 +381,10 @@ namespace SansyHuman.TWHG.Core
         {
             void OnPointerPosition(InputAction.CallbackContext context);
             void OnScreenClick(InputAction.CallbackContext context);
+            void OnScreenNegClick(InputAction.CallbackContext context);
             void OnScreenMag(InputAction.CallbackContext context);
             void OnMove(InputAction.CallbackContext context);
+            void OnAlt(InputAction.CallbackContext context);
         }
     }
 }

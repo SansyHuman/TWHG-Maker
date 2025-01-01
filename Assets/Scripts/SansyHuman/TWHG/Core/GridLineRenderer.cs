@@ -68,7 +68,7 @@ namespace SansyHuman.TWHG.Core
         {
             if (!lineMaterial)
             {
-                Debug.LogError("Grid line material not found.");
+                UnityEngine.Debug.LogError("Grid line material not found.");
                 return;
             }
             
