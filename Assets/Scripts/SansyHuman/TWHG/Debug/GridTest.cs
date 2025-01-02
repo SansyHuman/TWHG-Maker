@@ -15,6 +15,7 @@ namespace SansyHuman.TWHG.Debug
         [SerializeField] private GridTileSystem gridTileSystem;
         [SerializeField] private GridWallSystem gridWallSystem;
         [SerializeField] private CameraController cameraController;
+        [SerializeField] private RectTransform tileUiImage;
 
         void Awake()
         {
@@ -121,6 +122,16 @@ namespace SansyHuman.TWHG.Debug
                 cameraController.enableDrag = false;
                 cameraController.enableMagnification = false;
             };
+        }
+
+        private void Update()
+        {
+            Vector2 mousePos = _actions.Editor.PointerPosition.ReadValue<Vector2>();
+            Vector3 worldPos = _mainCamera.ScreenToWorldPoint(mousePos);
+            Vector2Int gridPos = gridTileSystem.GetGridIndex(worldPos.x, worldPos.y);
+            Vector2 tileUiPos = gridTileSystem.GetGridPosition(gridPos.x, gridPos.y);
+            
+            tileUiImage.anchoredPosition = tileUiPos;
         }
 
         private void OnEnable()
