@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SansyHuman.TWHG.Core;
 using UnityEngine;
 using UnityEngine.Serialization;
 using Math = SansyHuman.TWHG.Core.Math;
@@ -9,7 +10,7 @@ namespace SansyHuman.TWHG.World
     /// <summary>
     /// The class to manage tiles in the grid system.
     /// </summary>
-    public class GridSystem : MonoBehaviour
+    public class GridTileSystem : GridSystem<GridTileSystem.Tile?>
     {
         /// <summary>
         /// Struct that contains components consisting a tile.
@@ -19,16 +20,13 @@ namespace SansyHuman.TWHG.World
             /// <summary>
             /// Front tile face.
             /// </summary>
-            public SpriteRenderer tile;
+            public SpriteRenderer MainTile;
             
             /// <summary>
             /// Tile outline.
             /// </summary>
-            public SpriteRenderer outline;
+            public SpriteRenderer Outline;
         }
-        
-        [Tooltip("The world space size of a tile.")]
-        [SerializeField] private float gridSize = 1.0f;
         
         [Tooltip("The sprite prefab to use as tiles. It should be 1 x 1 size in world space.")]
         [SerializeField] private SpriteRenderer tileSprite;
@@ -47,34 +45,12 @@ namespace SansyHuman.TWHG.World
 
         [Tooltip("The render order of the tile.")]
         [SerializeField] private int tileRenderOrder = -1;
-
-        private Dictionary<Vector2Int, Tile> _tiles;
-
-        private void Start()
-        {
-            transform.position = Vector3.zero;
-            _tiles = new Dictionary<Vector2Int, Tile>();
-            
-            // For debug.
-            /*
-            AddTile(0, 0);
-            AddTile(0, 1);
-            AddTile(0, 2);
-            AddTile(1, 2);
-            */
-        }
-
-        /// <summary>
-        /// Adds a tile at the grid index. If the tile already exists at the index, returns null.
-        /// </summary>
-        /// <param name="x">X grid index.</param>
-        /// <param name="y">Y grid index.</param>
-        /// <returns>Added tile. If the tile already exists at the index, returns null.</returns>
-        public Tile? AddTile(int x, int y)
+        
+        public override Tile? AddTile(int x, int y)
         {
             if (_tiles.ContainsKey(new Vector2Int(x, y)))
             {
-                UnityEngine.Debug.Log("Tile already exists.");
+                UnityEngine.Debug.LogWarning("Tile already exists.");
                 return null;
             }
             
@@ -93,62 +69,27 @@ namespace SansyHuman.TWHG.World
             newOutline.sortingOrder = tileRenderOrder - 1;
             newOutline.name = "Outline";
 
-            Tile newTileComps = new Tile { tile = newTile, outline = newOutline };
+            Tile newTileComps = new Tile { MainTile = newTile, Outline = newOutline };
             
             _tiles.Add(new Vector2Int(x, y), newTileComps);
 
             return newTileComps;
         }
-
-        /// <summary>
-        /// Removes a tile at the grid index.
-        /// </summary>
-        /// <param name="x">X grid index.</param>
-        /// <param name="y">Y grid index.</param>
-        public void RemoveTile(int x, int y)
+        
+        public override bool RemoveTile(int x, int y)
         {
             if (!_tiles.ContainsKey(new Vector2Int(x, y)))
             {
-                return;
+                UnityEngine.Debug.LogWarning("Tile does not exists.");
+                return false;
             }
             
-            Tile tile = _tiles[new Vector2Int(x, y)];
-            Destroy(tile.tile.gameObject);
+            Tile tile = _tiles[new Vector2Int(x, y)].Value;
+            Destroy(tile.MainTile.gameObject);
             _tiles.Remove(new Vector2Int(x, y));
-        }
 
-        /// <summary>
-        /// Gets the grid index of the position in world space.
-        /// </summary>
-        /// <param name="xPos">X position in world space.</param>
-        /// <param name="yPos">Y position in world space.</param>
-        /// <returns>Grid index of the position.</returns>
-        public Vector2Int GetGridIndex(float xPos, float yPos)
-        {
-            return (Vector2Int)Math.Floor(new Vector2(xPos, yPos));
+            return true;
         }
-
-        /// <summary>
-        /// Gets the center position of the grid in world space.
-        /// </summary>
-        /// <param name="x">X grid index.</param>
-        /// <param name="y">Y grid index.</param>
-        /// <returns>Center position of the grid.</returns>
-        public Vector2 GetGridPosition(int x, int y)
-        {
-            float halfGridSize = gridSize / 2;
-            return new Vector2(x * gridSize + halfGridSize, y * gridSize + halfGridSize);
-        }
-
-        /// <summary>
-        /// Gets the size of a grid in world space.
-        /// </summary>
-        public float GridSize => gridSize;
-        
-        /// <summary>
-        /// Gets the half size of a grid in world space.
-        /// </summary>
-        public float HalfGridSize => gridSize / 2;
 
         /// <summary>
         /// Gets and sets the first color of the tile. The first color is applied to tiles where the sum
@@ -164,7 +105,7 @@ namespace SansyHuman.TWHG.World
                 {
                     if ((index.x + index.y) % 2 == 0)
                     {
-                        _tiles[index].tile.color = value;
+                        _tiles[index].Value.MainTile.color = value;
                     }
                 }
             }
@@ -184,7 +125,7 @@ namespace SansyHuman.TWHG.World
                 {
                     if ((index.x + index.y) % 2 == 1)
                     {
-                        _tiles[index].tile.color = value;
+                        _tiles[index].Value.MainTile.color = value;
                     }
                 }
             }
@@ -201,7 +142,7 @@ namespace SansyHuman.TWHG.World
                 tileOutlineThickness = value;
                 foreach (var tile in _tiles.Values)
                 {
-                    tile.outline.transform.localScale = new Vector3(1 + tileOutlineThickness, 1 + tileOutlineThickness, 1);
+                    tile.Value.Outline.transform.localScale = new Vector3(1 + tileOutlineThickness, 1 + tileOutlineThickness, 1);
                 }
             }
         }
@@ -217,7 +158,7 @@ namespace SansyHuman.TWHG.World
                 tileOutlineColor = value;
                 foreach (var tile in _tiles.Values)
                 {
-                    tile.outline.color = value;
+                    tile.Value.Outline.color = value;
                 }
             }
         }
