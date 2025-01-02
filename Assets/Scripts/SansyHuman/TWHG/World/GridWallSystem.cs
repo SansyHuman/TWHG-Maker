@@ -3,6 +3,11 @@ using UnityEngine;
 
 namespace SansyHuman.TWHG.World
 {
+    /// <summary>
+    /// The class to manage walls in the grid system.
+    /// </summary>
+    [RequireComponent(typeof(CompositeCollider2D))]
+    [RequireComponent(typeof(Rigidbody2D))]
     public class GridWallSystem : GridSystem<GridWallSystem.Wall?>
     {
         /// <summary>
@@ -20,6 +25,9 @@ namespace SansyHuman.TWHG.World
             /// </summary>
             public SpriteRenderer DebugSprite;
         }
+        
+        private CompositeCollider2D _collider;
+        private Rigidbody2D _rigidbody;
 
         [Tooltip("The wall prefab to use. It should be a 1 x 1 size static collider.")]
         [SerializeField] private Collider2D wall;
@@ -39,7 +47,17 @@ namespace SansyHuman.TWHG.World
         [Tooltip("If true show the debug sprites.")]
         [SerializeField] private bool debug = false;
 
+        protected override void Start()
+        {
+            base.Start();
+            
+            _collider = GetComponent<CompositeCollider2D>();
+            _rigidbody = GetComponent<Rigidbody2D>();
 
+            _collider.generationType = CompositeCollider2D.GenerationType.Synchronous;
+            _rigidbody.bodyType = RigidbodyType2D.Static;
+        }
+        
         public override Wall? AddTile(int x, int y)
         {
             if (_tiles.ContainsKey(new Vector2Int(x, y)))
@@ -51,6 +69,7 @@ namespace SansyHuman.TWHG.World
             Vector3 tilePosition = GetGridPosition(x, y);
             
             Collider2D newWall = Instantiate(wall, tilePosition, Quaternion.identity, transform);
+            newWall.usedByComposite = true;
             newWall.transform.localScale = new Vector3(gridSize, gridSize, 1);
             newWall.name = $"Wall {x}, {y}";
 
@@ -64,6 +83,7 @@ namespace SansyHuman.TWHG.World
             Color debugC = debugColor;
             debugC.a *= debug ? 1 : 0;
             newSprite.color = debugC;
+            newSprite.rendererPriority = debugRenderOrder;
             
             Wall newWallComps = new Wall() { Collider = newWall, DebugSprite = newSprite };
             
