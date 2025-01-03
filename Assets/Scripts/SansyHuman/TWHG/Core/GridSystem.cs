@@ -35,6 +35,23 @@ namespace SansyHuman.TWHG.Core
         /// <param name="y">Y grid index.</param>
         /// <returns>True if the tile removed. Else, false.</returns>
         public abstract bool RemoveTile(int x, int y);
+
+        /// <summary>
+        /// Gets the tile at the grid index.
+        /// </summary>
+        /// <param name="x">X grid index.</param>
+        /// <param name="y">Y grid index.</param>
+        /// <returns>Object at the grid index. If does not exist, returns null.</returns>
+        public T GetTile(int x, int y)
+        {
+            if (!DoesTileExist(x, y))
+            {
+                UnityEngine.Debug.LogWarning($"Tile {x}, {y} does not exist.");
+                return default(T);
+            }
+            
+            return _tiles[new Vector2Int(x, y)];
+        }
         
         /// <summary>
         /// Gets the grid index of the position in world space.

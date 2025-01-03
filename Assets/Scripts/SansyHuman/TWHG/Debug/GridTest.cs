@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using SansyHuman.TWHG.Core;
+using SansyHuman.TWHG.UI;
 using SansyHuman.TWHG.World;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -16,6 +17,7 @@ namespace SansyHuman.TWHG.Debug
         [SerializeField] private GridWallSystem gridWallSystem;
         [SerializeField] private CameraController cameraController;
         [SerializeField] private RectTransform tileUiImage;
+        [SerializeField] private SelectedObjects selectedObjects;
 
         void Awake()
         {
@@ -25,7 +27,7 @@ namespace SansyHuman.TWHG.Debug
             cameraController.enableDrag = false;
             cameraController.enableMagnification = false;
 
-            _actions.Editor.ScreenClick.performed += context =>
+            _actions.Editor.ScreenClick.canceled += context =>
             {
                 if (_actions.Editor.Alt.IsPressed())
                 {
@@ -40,6 +42,8 @@ namespace SansyHuman.TWHG.Debug
                 {
                     return;
                 }
+
+                selectedObjects.AddSelectedObject(gridTileSystem.GetTile(gridPos.x, gridPos.y).Value.MainTile.gameObject);
 
                 if (gridWallSystem.DoesTileExist(gridPos.x, gridPos.y))
                 {
@@ -67,7 +71,7 @@ namespace SansyHuman.TWHG.Debug
                 }
             };
 
-            _actions.Editor.ScreenNegClick.performed += context =>
+            _actions.Editor.ScreenNegClick.canceled += context =>
             {
                 if (_actions.Editor.Alt.IsPressed())
                 {
@@ -78,10 +82,13 @@ namespace SansyHuman.TWHG.Debug
                 Vector3 worldPos = _mainCamera.ScreenToWorldPoint(mousePos);
                 Vector2Int gridPos = gridTileSystem.GetGridIndex(worldPos.x, worldPos.y);
 
-                if (!gridTileSystem.RemoveTile(gridPos.x, gridPos.y))
+                GridTileSystem.Tile? tile = gridTileSystem.GetTile(gridPos.x, gridPos.y);
+                if (!tile.HasValue)
                 {
                     return;
                 }
+                selectedObjects.RemoveSelectedObject(tile.Value.MainTile.gameObject);
+                gridTileSystem.RemoveTile(gridPos.x, gridPos.y);
 
                 if (gridWallSystem.DoesTileExist(gridPos.x + 1, gridPos.y) && !gridTileSystem.DoesTileExistAtAdjacentGrids(gridPos.x + 1, gridPos.y))
                 {
