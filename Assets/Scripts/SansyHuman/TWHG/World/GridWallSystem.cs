@@ -1,3 +1,4 @@
+using System;
 using SansyHuman.TWHG.Core;
 using UnityEngine;
 
@@ -13,6 +14,7 @@ namespace SansyHuman.TWHG.World
         /// <summary>
         /// Struct that contains components consisting a wall.
         /// </summary>
+        [Serializable]
         public struct Wall
         {
             /// <summary>
@@ -88,6 +90,8 @@ namespace SansyHuman.TWHG.World
             Wall newWallComps = new Wall() { Collider = newWall, DebugSprite = newSprite };
             
             _tiles.Add(new Vector2Int(x, y), newWallComps);
+            
+            onTileAdded.Invoke(newWallComps);
 
             return newWallComps;
         }
@@ -101,6 +105,7 @@ namespace SansyHuman.TWHG.World
             }
             
             Wall wall = _tiles[new Vector2Int(x, y)].Value;
+            onTileRemoved.Invoke(wall);
             Destroy(wall.Collider.gameObject);
             _tiles.Remove(new Vector2Int(x, y));
 

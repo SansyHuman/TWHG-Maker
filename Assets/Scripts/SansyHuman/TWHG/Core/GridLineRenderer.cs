@@ -121,6 +121,11 @@ namespace SansyHuman.TWHG.Core
         
         private void RenderPipelineManager_endCameraRendering(ScriptableRenderContext context, Camera camera)
         {
+            if (camera != _camera)
+            {
+                return;
+            }
+            
             OnPostRender();
         }
     }

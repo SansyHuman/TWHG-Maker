@@ -1,10 +1,13 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using SansyHuman.TWHG.Core;
 using SansyHuman.TWHG.UI;
 using SansyHuman.TWHG.World;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
+using UnityEngine.UI;
 
 namespace SansyHuman.TWHG.Debug
 {
@@ -18,6 +21,7 @@ namespace SansyHuman.TWHG.Debug
         [SerializeField] private CameraController cameraController;
         [SerializeField] private RectTransform tileUiImage;
         [SerializeField] private SelectedObjects selectedObjects;
+        [SerializeField] private RectTransform objectHierarcy;
 
         void Awake()
         {
@@ -29,7 +33,7 @@ namespace SansyHuman.TWHG.Debug
 
             _actions.Editor.ScreenClick.canceled += context =>
             {
-                if (_actions.Editor.Alt.IsPressed())
+                if (EventSystem.current.IsPointerOverGameObject() || _actions.Editor.Alt.IsPressed())
                 {
                     return;
                 }
@@ -73,7 +77,7 @@ namespace SansyHuman.TWHG.Debug
 
             _actions.Editor.ScreenNegClick.canceled += context =>
             {
-                if (_actions.Editor.Alt.IsPressed())
+                if (EventSystem.current.IsPointerOverGameObject() || _actions.Editor.Alt.IsPressed())
                 {
                     return;
                 }
@@ -122,6 +126,7 @@ namespace SansyHuman.TWHG.Debug
             {
                 cameraController.enableDrag = true;
                 cameraController.enableMagnification = true;
+                StartCoroutine(RebuildLayout(objectHierarcy));
             };
             
             _actions.Editor.Alt.canceled += context =>
@@ -129,6 +134,13 @@ namespace SansyHuman.TWHG.Debug
                 cameraController.enableDrag = false;
                 cameraController.enableMagnification = false;
             };
+        }
+
+        private IEnumerator RebuildLayout(RectTransform tr)
+        {
+            yield return new WaitForEndOfFrame();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(tr);
+            Canvas.ForceUpdateCanvases();
         }
 
         private void Update()
@@ -149,6 +161,26 @@ namespace SansyHuman.TWHG.Debug
         private void OnDisable()
         {
             _actions.Editor.Disable();
+        }
+
+        public void OnTileAdded(GridTileSystem.Tile? tile)
+        {
+            UnityEngine.Debug.Log("Tile added: " + tile.Value.MainTile.gameObject.name);
+        }
+
+        public void OnTileRemoved(GridTileSystem.Tile? tile)
+        {
+            UnityEngine.Debug.Log("Tile removed: " + tile.Value.MainTile.gameObject.name);
+        }
+
+        public void OnWallAdded(GridWallSystem.Wall? wall)
+        {
+            UnityEngine.Debug.Log("Wall added: " + wall.Value.Collider.gameObject.name);
+        }
+
+        public void OnWallRemoved(GridWallSystem.Wall? wall)
+        {
+            UnityEngine.Debug.Log("Wall removed: " + wall.Value.Collider.gameObject.name);
         }
     }
 }

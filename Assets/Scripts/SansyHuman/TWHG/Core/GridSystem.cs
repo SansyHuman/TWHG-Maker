@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace SansyHuman.TWHG.Core
 {
@@ -12,16 +13,34 @@ namespace SansyHuman.TWHG.Core
         [Tooltip("The world space size of a grid.")]
         [SerializeField] protected float gridSize = 1.0f;
 
+        [Tooltip("Event called when a tile object is added.")]
+        [SerializeField] protected UnityEvent<T> onTileAdded;
+        
+        [Tooltip("Event called when a tile object is removed.")]
+        [SerializeField] protected UnityEvent<T> onTileRemoved;
+
         protected Dictionary<Vector2Int, T> _tiles;
         
         protected virtual void Start()
         {
             transform.position = Vector3.zero;
+
+            if (onTileAdded == null)
+            {
+                onTileAdded = new UnityEvent<T>();
+            }
+
+            if (onTileRemoved == null)
+            {
+                onTileRemoved = new UnityEvent<T>();
+            }
+            
             _tiles = new Dictionary<Vector2Int, T>();
         }
 
         /// <summary>
         /// Adds a tile at the grid index. If the tile already exists at the index, returns null.
+        /// When implementing, invoke <see cref="onTileAdded"/> event after object addition.
         /// </summary>
         /// <param name="x">X grid index.</param>
         /// <param name="y">Y grid index.</param>
@@ -29,7 +48,8 @@ namespace SansyHuman.TWHG.Core
         public abstract T AddTile(int x, int y);
         
         /// <summary>
-        /// Removes a tile at the grid index.
+        /// Removes a tile at the grid index. When implementing, invoke <see cref="onTileRemoved"/> before
+        /// destroying the tile.
         /// </summary>
         /// <param name="x">X grid index.</param>
         /// <param name="y">Y grid index.</param>

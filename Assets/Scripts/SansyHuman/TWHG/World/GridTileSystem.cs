@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
 using SansyHuman.TWHG.Core;
 using UnityEngine;
-using UnityEngine.Serialization;
-using Math = SansyHuman.TWHG.Core.Math;
 
 namespace SansyHuman.TWHG.World
 {
@@ -15,6 +12,7 @@ namespace SansyHuman.TWHG.World
         /// <summary>
         /// Struct that contains components consisting a tile.
         /// </summary>
+        [Serializable]
         public struct Tile
         {
             /// <summary>
@@ -72,6 +70,8 @@ namespace SansyHuman.TWHG.World
             Tile newTileComps = new Tile { MainTile = newTile, Outline = newOutline };
             
             _tiles.Add(new Vector2Int(x, y), newTileComps);
+            
+            onTileAdded.Invoke(newTileComps);
 
             return newTileComps;
         }
@@ -85,6 +85,7 @@ namespace SansyHuman.TWHG.World
             }
             
             Tile tile = _tiles[new Vector2Int(x, y)].Value;
+            onTileRemoved.Invoke(tile);
             Destroy(tile.MainTile.gameObject);
             _tiles.Remove(new Vector2Int(x, y));
 

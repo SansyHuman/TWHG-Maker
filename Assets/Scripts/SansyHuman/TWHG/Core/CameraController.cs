@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace SansyHuman.TWHG.Core
 {
@@ -43,6 +44,12 @@ namespace SansyHuman.TWHG.Core
         // Update is called once per frame
         void Update()
         {
+            // Ignore input if the pointer is on UI.
+            if (EventSystem.current.IsPointerOverGameObject())
+            {
+                return;
+            }
+            
             if (enableDrag)
             {
 #if UNITY_STANDALONE || UNITY_EDITOR
