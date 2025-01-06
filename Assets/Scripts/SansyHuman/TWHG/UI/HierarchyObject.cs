@@ -23,6 +23,9 @@ namespace SansyHuman.TWHG.UI
         // UI elements of children.
         private List<HierarchyObject> _children;
         
+        // UI element of parent.
+        private HierarchyObject _parent;
+        
         private RectTransform _rectTransform;
         private VerticalLayoutGroup _layoutGroup;
 
@@ -36,8 +39,13 @@ namespace SansyHuman.TWHG.UI
             {
                 _depth = value;
                 RectOffset offset = _layoutGroup.padding;
-                offset.left = Mathf.FloorToInt(_depth * _rectTransform.rect.height);
+                offset.left = _depth == 0 ? 0 : Mathf.FloorToInt(_rectTransform.rect.height);
                 _layoutGroup.padding = offset;
+
+                for (int i = 0; i < _children.Count; i++)
+                {
+                    _children[i].Depth = _depth + 1;
+                }
             }
         }
         
@@ -49,6 +57,7 @@ namespace SansyHuman.TWHG.UI
         void Awake()
         {
             _children = new List<HierarchyObject>();
+            _parent = null;
             _rectTransform = GetComponent<RectTransform>();
             _layoutGroup = GetComponent<VerticalLayoutGroup>();
             expandButton.interactable = false;
@@ -86,7 +95,7 @@ namespace SansyHuman.TWHG.UI
         }
 
         /// <summary>
-        /// Adds child UI element to this UI element.
+        /// Adds child to this object. Note that it changes hierarchy in both UI and real object.
         /// </summary>
         /// <param name="child">Child UI element.</param>
         public void AddChild(HierarchyObject child)
@@ -95,6 +104,11 @@ namespace SansyHuman.TWHG.UI
             {
                 UnityEngine.Debug.LogWarning("Child " + child.name + " is already in the hierarchy.");
                 return;
+            }
+
+            if (child._parent)
+            {
+                child._parent.RemoveChild(child, updateDepth:false);
             }
             
             child._rectTransform.SetParent(_rectTransform);
@@ -106,6 +120,41 @@ namespace SansyHuman.TWHG.UI
                 ExpandButtonUpdate();
             }
             _children.Add(child);
+            child._parent = this;
+            
+            child.ConnectedObject.transform.SetParent(ConnectedObject.transform);
+        }
+
+        /// <summary>
+        /// Removes child from this object and make it as a root object. Note that it changes hierarchy
+        /// in both UI and real object.
+        /// </summary>
+        /// <param name="child">Chile UI element.</param>
+        /// <param name="updateDepth">If true update the depth of the child and its children. Else,
+        /// do not update the depth.</param>
+        public void RemoveChild(HierarchyObject child, bool updateDepth = true)
+        {
+            int index = _children.IndexOf(child);
+            if (index < 0)
+            {
+                UnityEngine.Debug.LogWarning("Child " + child.name + " is not in the hierarchy.");
+                return;
+            }
+            
+            child._rectTransform.SetParent(null);
+            if (updateDepth)
+            {
+                child.Depth = 0;
+            }
+            _children.RemoveAt(index);
+            if (_children.Count == 0)
+            {
+                expandButton.interactable = false;
+                ExpandButtonUpdate();
+            }
+            child._parent = null;
+            
+            child.ConnectedObject.transform.SetParent(null);
         }
     }
 }
