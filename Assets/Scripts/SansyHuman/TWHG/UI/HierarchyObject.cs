@@ -2,10 +2,15 @@ using System.Collections.Generic;
 using SansyHuman.TWHG.Objects;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace SansyHuman.TWHG.UI
 {
+    /// <summary>
+    /// Component of UI element which indicates an object in the editor.
+    /// </summary>
+    [RequireComponent(typeof(RectTransform))]
     public class HierarchyObject : MonoBehaviour
     {
         // The depth of the object node.
@@ -25,6 +30,9 @@ namespace SansyHuman.TWHG.UI
         
         // UI element of parent.
         private HierarchyObject _parent;
+
+        // RectTransform of the hierarchy window.
+        private RectTransform _hierarchyWindow;
         
         private RectTransform _rectTransform;
         private VerticalLayoutGroup _layoutGroup;
@@ -39,7 +47,7 @@ namespace SansyHuman.TWHG.UI
             {
                 _depth = value;
                 RectOffset offset = _layoutGroup.padding;
-                offset.left = _depth == 0 ? 0 : Mathf.FloorToInt(_rectTransform.rect.height);
+                offset.left = _depth == 0 ? 0 : Mathf.FloorToInt(expandButton.GetComponent<RectTransform>().rect.height);
                 _layoutGroup.padding = offset;
 
                 for (int i = 0; i < _children.Count; i++)
@@ -81,17 +89,26 @@ namespace SansyHuman.TWHG.UI
             rotation.eulerAngles = new Vector3(0, 0, _hierarchyExpanded ? -180 : -90);
             buttonTr.rotation = rotation;
         }
-        
+
         /// <summary>
         /// Connects an object to this UI(only for internal usage).
         /// </summary>
         /// <param name="obj">Object to connect.</param>
         /// <param name="parent">Parent of this object.</param>
-        public void Initialize(ObjectEditorData obj, HierarchyObject parent)
+        /// <param name="hierarchyWindow">Hierarchy window ui.</param>
+        public void Initialize(ObjectEditorData obj, HierarchyObject parent, RectTransform hierarchyWindow)
         {
             ConnectedObject = obj;
             objectName.text = obj.gameObject.name;
-            parent.AddChild(this);
+            _hierarchyWindow = hierarchyWindow;
+            if (!parent)
+            {
+                _rectTransform.SetParent(_hierarchyWindow);
+            }
+            else
+            {
+                parent.AddChild(this);
+            }
         }
 
         /// <summary>
@@ -134,19 +151,19 @@ namespace SansyHuman.TWHG.UI
         /// do not update the depth.</param>
         public void RemoveChild(HierarchyObject child, bool updateDepth = true)
         {
-            int index = _children.IndexOf(child);
-            if (index < 0)
+            if (child._parent != this)
             {
                 UnityEngine.Debug.LogWarning("Child " + child.name + " is not in the hierarchy.");
                 return;
             }
             
-            child._rectTransform.SetParent(null);
+            child._rectTransform.SetParent(_hierarchyWindow);
             if (updateDepth)
             {
                 child.Depth = 0;
             }
-            _children.RemoveAt(index);
+
+            _children.Remove(child);
             if (_children.Count == 0)
             {
                 expandButton.interactable = false;
@@ -155,6 +172,24 @@ namespace SansyHuman.TWHG.UI
             child._parent = null;
             
             child.ConnectedObject.transform.SetParent(null);
+        }
+
+        /// <summary>
+        /// Adds a listener to the expand button click event.
+        /// </summary>
+        /// <param name="callback">Callback function.</param>
+        public void AddExpandButtonClickListener(UnityAction callback)
+        {
+            expandButton.onClick.AddListener(callback);
+        }
+
+        /// <summary>
+        /// Removes a listener from the expand button click event.
+        /// </summary>
+        /// <param name="callback">Callback function.</param>
+        public void RemoveExpandButtonClickListener(UnityAction callback)
+        {
+            expandButton.onClick.RemoveListener(callback);
         }
     }
 }
