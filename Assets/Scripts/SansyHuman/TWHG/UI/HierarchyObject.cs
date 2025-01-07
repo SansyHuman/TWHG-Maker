@@ -23,10 +23,12 @@ namespace SansyHuman.TWHG.UI
         [SerializeField] private Button expandButton;
         
         [Tooltip("Text that shows the name of the object.")]
-        [SerializeField] private TextMeshProUGUI objectName;
+        [SerializeField] private ObjectNameField objectName;
 
         // UI elements of children.
-        private List<HierarchyObject> _children;
+        private LinkedList<HierarchyObject> _children;
+        // Dictionary for quick search for HierarchyObject connected to the object.
+        private Dictionary<ObjectEditorData, LinkedListNode<HierarchyObject>> _objChildPairs;
         
         // UI element of parent.
         private HierarchyObject _parent;
@@ -50,9 +52,9 @@ namespace SansyHuman.TWHG.UI
                 offset.left = _depth == 0 ? 0 : Mathf.FloorToInt(expandButton.GetComponent<RectTransform>().rect.height);
                 _layoutGroup.padding = offset;
 
-                for (int i = 0; i < _children.Count; i++)
+                foreach (var child in _children)
                 {
-                    _children[i].Depth = _depth + 1;
+                    child.Depth = _depth + 1;
                 }
             }
         }
@@ -62,9 +64,19 @@ namespace SansyHuman.TWHG.UI
         /// </summary>
         public ObjectEditorData ConnectedObject { get; private set; }
 
+        /// <summary>
+        /// Gets and sets whether the object is selected.
+        /// </summary>
+        public bool Selected
+        {
+            get => objectName.Selected;
+            set => objectName.Selected = value;
+        }
+
         void Awake()
         {
-            _children = new List<HierarchyObject>();
+            _children = new LinkedList<HierarchyObject>();
+            _objChildPairs = new Dictionary<ObjectEditorData, LinkedListNode<HierarchyObject>>();
             _parent = null;
             _rectTransform = GetComponent<RectTransform>();
             _layoutGroup = GetComponent<VerticalLayoutGroup>();
@@ -76,9 +88,9 @@ namespace SansyHuman.TWHG.UI
         {
             _hierarchyExpanded = !_hierarchyExpanded;
             ExpandButtonUpdate();
-            for (int i = 0; i < _children.Count; i++)
+            foreach (var child in _children)
             {
-                _children[i].gameObject.SetActive(_hierarchyExpanded);
+                child.gameObject.SetActive(_hierarchyExpanded);
             }
         }
 
@@ -99,7 +111,7 @@ namespace SansyHuman.TWHG.UI
         public void Initialize(ObjectEditorData obj, HierarchyObject parent, RectTransform hierarchyWindow)
         {
             ConnectedObject = obj;
-            objectName.text = obj.gameObject.name;
+            objectName.Text = obj.gameObject.name;
             _hierarchyWindow = hierarchyWindow;
             if (!parent)
             {
@@ -117,7 +129,7 @@ namespace SansyHuman.TWHG.UI
         /// <param name="child">Child UI element.</param>
         public void AddChild(HierarchyObject child)
         {
-            if (_children.Contains(child))
+            if (_objChildPairs.ContainsKey(child.ConnectedObject))
             {
                 UnityEngine.Debug.LogWarning("Child " + child.name + " is already in the hierarchy.");
                 return;
@@ -136,7 +148,8 @@ namespace SansyHuman.TWHG.UI
                 expandButton.interactable = true;
                 ExpandButtonUpdate();
             }
-            _children.Add(child);
+            LinkedListNode<HierarchyObject> newNode = _children.AddLast(child);
+            _objChildPairs.Add(child.ConnectedObject, newNode);
             child._parent = this;
             
             child.ConnectedObject.transform.SetParent(ConnectedObject.transform);
@@ -163,7 +176,9 @@ namespace SansyHuman.TWHG.UI
                 child.Depth = 0;
             }
 
-            _children.Remove(child);
+            LinkedListNode<HierarchyObject> childNode = _objChildPairs[child.ConnectedObject];
+            _children.Remove(childNode);
+            _objChildPairs.Remove(child.ConnectedObject);
             if (_children.Count == 0)
             {
                 expandButton.interactable = false;

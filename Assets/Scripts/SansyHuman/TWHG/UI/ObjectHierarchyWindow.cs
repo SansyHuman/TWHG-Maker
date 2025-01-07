@@ -82,6 +82,10 @@ namespace SansyHuman.TWHG.UI
             yield return _wait;
             LayoutRebuilder.ForceRebuildLayoutImmediate(tr);
             Canvas.ForceUpdateCanvases();
+            
+            yield return _wait;
+            LayoutRebuilder.ForceRebuildLayoutImmediate(tr);
+            Canvas.ForceUpdateCanvases();
         }
     }
 }
