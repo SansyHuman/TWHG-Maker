@@ -65,6 +65,34 @@ namespace SansyHuman.TWHG.UI
         public ObjectEditorData ConnectedObject { get; private set; }
 
         /// <summary>
+        /// Gets the last child object in the UI order. If child does not exist, returns null.
+        /// Note that it searches for last child of all subtree.
+        /// </summary>
+        public ObjectEditorData LastChild
+        {
+            get
+            {
+                if (_children.Count == 0)
+                {
+                    return null;
+                }
+
+                HierarchyObject lastChild = _children.Last.Value;
+                while (true)
+                {
+                    if (lastChild._children.Count == 0)
+                    {
+                        break;
+                    }
+
+                    lastChild = lastChild._children.Last.Value;
+                }
+                
+                return lastChild.ConnectedObject;
+            }
+        }
+
+        /// <summary>
         /// Gets and sets whether the object is selected.
         /// </summary>
         public bool Selected

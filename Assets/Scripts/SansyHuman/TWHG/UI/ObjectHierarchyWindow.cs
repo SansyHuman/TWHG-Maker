@@ -7,7 +7,7 @@ using UnityEngine.UI;
 namespace SansyHuman.TWHG.UI
 {
     /// <summary>
-    /// Component of Hierarchy window.
+    /// Component of hierarchy window.
     /// </summary>
     [RequireComponent(typeof(RectTransform))]
     public class ObjectHierarchyWindow : MonoBehaviour
@@ -18,11 +18,15 @@ namespace SansyHuman.TWHG.UI
         [Tooltip("Prefab for UI element of object in hierarchy window.")]
         [SerializeField] private HierarchyObject objectPrefab;
 
-        private Dictionary<ObjectEditorData, HierarchyObject> _objects;
+        // Objects in the hierarchy window in the order of UI elements.
+        private LinkedList<HierarchyObject> _objects;
+        // Dictionary for quick search for HierarchyObject connected to the object.
+        private Dictionary<ObjectEditorData, LinkedListNode<HierarchyObject>> _objNodePairs;
 
         void Awake()
         {
-            _objects = new Dictionary<ObjectEditorData, HierarchyObject>();
+            _objects = new LinkedList<HierarchyObject>();
+            _objNodePairs = new Dictionary<ObjectEditorData, LinkedListNode<HierarchyObject>>();
         }
 
         /// <summary>
@@ -31,7 +35,7 @@ namespace SansyHuman.TWHG.UI
         /// <param name="obj">Object to add.</param>
         public void AddObject(ObjectEditorData obj)
         {
-            if (_objects.ContainsKey(obj))
+            if (_objNodePairs.ContainsKey(obj))
             {
                 UnityEngine.Debug.LogWarning("Object already added to hierarchy window.");
                 return;
@@ -48,21 +52,34 @@ namespace SansyHuman.TWHG.UI
                 HierarchyObject hobj = Instantiate(objectPrefab, hierarchyWindow);
                 hobj.Initialize(obj, null, hierarchyWindow);
                 hobj.AddExpandButtonClickListener(Refresh);
-                _objects.Add(obj, hobj);
+                LinkedListNode<HierarchyObject> newNode = _objects.AddLast(hobj); // Most recent root object is always at the last.
+                _objNodePairs.Add(obj, newNode);
             }
             else
             {
-                if (!_objects.ContainsKey(parent))
+                if (!_objNodePairs.ContainsKey(parent))
                 {
                     AddObject(parent);
                 }
                 
-                HierarchyObject hparent = _objects[parent];
+                LinkedListNode<HierarchyObject> parentNode = _objNodePairs[parent];
+                ObjectEditorData lastChild = parentNode.Value.LastChild;
                 
                 HierarchyObject hobj = Instantiate(objectPrefab, hierarchyWindow);
-                hobj.Initialize(obj, hparent, hierarchyWindow);
+                hobj.Initialize(obj, parentNode.Value, hierarchyWindow);
                 hobj.AddExpandButtonClickListener(Refresh);
-                _objects.Add(obj, hobj);
+                
+                LinkedListNode<HierarchyObject> newNode = null;
+                if (!lastChild)
+                {
+                    newNode = _objects.AddAfter(parentNode, hobj);
+                }
+                else
+                {
+                    LinkedListNode<HierarchyObject> lastChildNode = _objNodePairs[lastChild];
+                    newNode = _objects.AddAfter(lastChildNode, hobj);
+                }
+                _objNodePairs.Add(obj, newNode);
             }
 
             Refresh();
