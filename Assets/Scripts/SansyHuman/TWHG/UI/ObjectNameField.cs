@@ -11,7 +11,7 @@ namespace SansyHuman.TWHG.UI
     /// Component of object name field.
     /// </summary>
     [RequireComponent(typeof(RawImage))]
-    public class ObjectNameField : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
+    public class ObjectNameField : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler, IDragHandler, IDropHandler
     {
         [Tooltip("The color of the field when the object is selected.")]
         [SerializeField] private Color selectColor;
@@ -51,9 +51,21 @@ namespace SansyHuman.TWHG.UI
             set
             {
                 _selected = value;
-                Color col = selectColor;
-                col.a *= _selected ? 1 : 0;
-                _field.color = col;
+                if (_selected)
+                {
+                    _field.color = selectColor;
+                }
+                else
+                {
+                    if (_hover)
+                    {
+                        _field.color = hoverColor;
+                    }
+                    else
+                    {
+                        _field.color = new Color(0, 0, 0, 0);
+                    }
+                }
             }
         }
 
@@ -68,13 +80,14 @@ namespace SansyHuman.TWHG.UI
                 _hover = value;
                 if (_hover)
                 {
-                    Color col = hoverColor;
                     if (_selected)
                     {
-                        col = selectColor;
+                        _field.color = selectColor;
                     }
-
-                    _field.color = col;
+                    else
+                    {
+                        _field.color = hoverColor;
+                    }
                 }
                 else
                 {
@@ -129,6 +142,19 @@ namespace SansyHuman.TWHG.UI
         }
 
         public void OnPointerUp(PointerEventData eventData)
+        {
+            if (eventData.button == PointerEventData.InputButton.Left && _hover)
+            {
+                onObjectPointerUp.Invoke(this);
+            }
+        }
+
+        public void OnDrag(PointerEventData eventData)
+        {
+            
+        }
+
+        public void OnDrop(PointerEventData eventData)
         {
             if (eventData.button == PointerEventData.InputButton.Left)
             {

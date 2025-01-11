@@ -82,6 +82,24 @@ namespace SansyHuman.TWHG.Core
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Ctrl"",
+                    ""type"": ""Button"",
+                    ""id"": ""dae9687b-072b-4074-b5a4-40580feb8cb6"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Shift"",
+                    ""type"": ""Button"",
+                    ""id"": ""0df89ab2-634a-4f59-932e-756b9cb0346f"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -192,6 +210,28 @@ namespace SansyHuman.TWHG.Core
                     ""processors"": """",
                     ""groups"": ""PC"",
                     ""action"": ""Alt"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a309fcc6-a500-4efd-ae23-bc6b0cc68c11"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""PC"",
+                    ""action"": ""Ctrl"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8ea25053-de51-47b0-adea-91ee007f500b"",
+                    ""path"": ""<Keyboard>/shift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""PC"",
+                    ""action"": ""Shift"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -352,6 +392,8 @@ namespace SansyHuman.TWHG.Core
             m_Editor_ScreenMag = m_Editor.FindAction("ScreenMag", throwIfNotFound: true);
             m_Editor_Move = m_Editor.FindAction("Move", throwIfNotFound: true);
             m_Editor_Alt = m_Editor.FindAction("Alt", throwIfNotFound: true);
+            m_Editor_Ctrl = m_Editor.FindAction("Ctrl", throwIfNotFound: true);
+            m_Editor_Shift = m_Editor.FindAction("Shift", throwIfNotFound: true);
             // Game
             m_Game = asset.FindActionMap("Game", throwIfNotFound: true);
             m_Game_Move = m_Game.FindAction("Move", throwIfNotFound: true);
@@ -422,6 +464,8 @@ namespace SansyHuman.TWHG.Core
         private readonly InputAction m_Editor_ScreenMag;
         private readonly InputAction m_Editor_Move;
         private readonly InputAction m_Editor_Alt;
+        private readonly InputAction m_Editor_Ctrl;
+        private readonly InputAction m_Editor_Shift;
         public struct EditorActions
         {
             private @TWHGInputActions m_Wrapper;
@@ -432,6 +476,8 @@ namespace SansyHuman.TWHG.Core
             public InputAction @ScreenMag => m_Wrapper.m_Editor_ScreenMag;
             public InputAction @Move => m_Wrapper.m_Editor_Move;
             public InputAction @Alt => m_Wrapper.m_Editor_Alt;
+            public InputAction @Ctrl => m_Wrapper.m_Editor_Ctrl;
+            public InputAction @Shift => m_Wrapper.m_Editor_Shift;
             public InputActionMap Get() { return m_Wrapper.m_Editor; }
             public void Enable() { Get().Enable(); }
             public void Disable() { Get().Disable(); }
@@ -459,6 +505,12 @@ namespace SansyHuman.TWHG.Core
                 @Alt.started += instance.OnAlt;
                 @Alt.performed += instance.OnAlt;
                 @Alt.canceled += instance.OnAlt;
+                @Ctrl.started += instance.OnCtrl;
+                @Ctrl.performed += instance.OnCtrl;
+                @Ctrl.canceled += instance.OnCtrl;
+                @Shift.started += instance.OnShift;
+                @Shift.performed += instance.OnShift;
+                @Shift.canceled += instance.OnShift;
             }
 
             private void UnregisterCallbacks(IEditorActions instance)
@@ -481,6 +533,12 @@ namespace SansyHuman.TWHG.Core
                 @Alt.started -= instance.OnAlt;
                 @Alt.performed -= instance.OnAlt;
                 @Alt.canceled -= instance.OnAlt;
+                @Ctrl.started -= instance.OnCtrl;
+                @Ctrl.performed -= instance.OnCtrl;
+                @Ctrl.canceled -= instance.OnCtrl;
+                @Shift.started -= instance.OnShift;
+                @Shift.performed -= instance.OnShift;
+                @Shift.canceled -= instance.OnShift;
             }
 
             public void RemoveCallbacks(IEditorActions instance)
@@ -561,6 +619,8 @@ namespace SansyHuman.TWHG.Core
             void OnScreenMag(InputAction.CallbackContext context);
             void OnMove(InputAction.CallbackContext context);
             void OnAlt(InputAction.CallbackContext context);
+            void OnCtrl(InputAction.CallbackContext context);
+            void OnShift(InputAction.CallbackContext context);
         }
         public interface IGameActions
         {

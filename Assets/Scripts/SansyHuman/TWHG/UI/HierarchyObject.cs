@@ -65,6 +65,22 @@ namespace SansyHuman.TWHG.UI
         public ObjectEditorData ConnectedObject { get; private set; }
 
         /// <summary>
+        /// Gets the parent object.
+        /// </summary>
+        public ObjectEditorData Parent
+        {
+            get
+            {
+                if (!_parent)
+                {
+                    return null;
+                }
+                
+                return _parent.ConnectedObject;
+            }
+        }
+
+        /// <summary>
         /// Gets the last child object in the UI order. If child does not exist, returns null.
         /// Note that it searches for last child of all subtree.
         /// </summary>
@@ -93,6 +109,22 @@ namespace SansyHuman.TWHG.UI
         }
 
         /// <summary>
+        /// Gets the last direct child object in the UI order. If child does not exist, returns null.
+        /// </summary>
+        public ObjectEditorData LastDirectChild
+        {
+            get
+            {
+                if (_children.Count == 0)
+                {
+                    return null;
+                }
+                
+                return _children.Last.Value.ConnectedObject;
+            }
+        }
+
+        /// <summary>
         /// Gets and sets whether the object is selected.
         /// </summary>
         public bool Selected
@@ -100,6 +132,11 @@ namespace SansyHuman.TWHG.UI
             get => objectName.Selected;
             set => objectName.Selected = value;
         }
+        
+        /// <summary>
+        /// Gets whether the children of the objects are shown.
+        /// </summary>
+        public bool Expanded => _hierarchyExpanded;
 
         void Awake()
         {
@@ -233,6 +270,42 @@ namespace SansyHuman.TWHG.UI
         public void RemoveExpandButtonClickListener(UnityAction callback)
         {
             expandButton.onClick.RemoveListener(callback);
+        }
+
+        /// <summary>
+        /// Adds a listener to the event called when the pointer down event occured on the name field.
+        /// </summary>
+        /// <param name="callback">Callback function</param>
+        public void AddObjectPointerDownListener(UnityAction<ObjectNameField> callback)
+        {
+            objectName.onObjectPointerDown.AddListener(callback);
+        }
+
+        /// <summary>
+        /// Removes a listener from the event called when the pointer down event occured on the name field.
+        /// </summary>
+        /// <param name="callback">Callback function</param>
+        public void RemoveObjectPointerDownListener(UnityAction<ObjectNameField> callback)
+        {
+            objectName.onObjectPointerDown.RemoveListener(callback);
+        }
+        
+        /// <summary>
+        /// Adds a listener to the event called when the pointer up event occured on the name field.
+        /// </summary>
+        /// <param name="callback">Callback function</param>
+        public void AddObjectPointerUpListener(UnityAction<ObjectNameField> callback)
+        {
+            objectName.onObjectPointerUp.AddListener(callback);
+        }
+
+        /// <summary>
+        /// Removes a listener from the event called when the pointer up event occured on the name field.
+        /// </summary>
+        /// <param name="callback">Callback function</param>
+        public void RemoveObjectPointerUpListener(UnityAction<ObjectNameField> callback)
+        {
+            objectName.onObjectPointerUp.RemoveListener(callback);
         }
     }
 }
