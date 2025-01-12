@@ -16,6 +16,9 @@ namespace SansyHuman.TWHG.UI
         [Tooltip("Object that shows the hierarchy.")]
         [SerializeField] private RectTransform hierarchyWindow;
 
+        [Tooltip("Object that contains the scroll rect which contains all objects.")]
+        [SerializeField] private ScrollRectNoDrag hierarchyViewer;
+
         [Tooltip("Prefab for UI element of object in hierarchy window.")]
         [SerializeField] private HierarchyObject objectPrefab;
 
@@ -37,6 +40,9 @@ namespace SansyHuman.TWHG.UI
             _selectedObjects = new LinkedList<ObjectEditorData>();
             _selectedObjNodePairs = new Dictionary<ObjectEditorData, LinkedListNode<ObjectEditorData>>();
             _lastSelectedObject = null;
+            
+            hierarchyViewer.onPointerDown.AddListener(OnScrollRectPointerDown);
+            hierarchyViewer.onPointerUp.AddListener(OnScrollRectPointerUp);
         }
 
         /// <summary>
@@ -116,6 +122,7 @@ namespace SansyHuman.TWHG.UI
             {
                 if (_selectedObjNodePairs.ContainsKey(_lastPointedField.ObjectUI.ConnectedObject))
                 {
+                    // Deselect object after the pointer is up on the same field.
                     _lastPointedFieldAlreadySelected = true;
                 }
                 else
@@ -129,6 +136,19 @@ namespace SansyHuman.TWHG.UI
             else if (InputSystem.Actions.Editor.Shift.IsPressed())
             {
                 _shiftPressed = true;
+            }
+            else
+            {
+                if (_selectedObjNodePairs.ContainsKey(_lastPointedField.ObjectUI.ConnectedObject))
+                {
+                    // Select only this object after the pointer is up on the same field.
+                    _lastPointedFieldAlreadySelected = true;
+                }
+                else
+                {
+                    ClearSelectedObjects();
+                    AddSelectedObjects(nameField.ObjectUI);
+                }
             }
         }
 
@@ -153,10 +173,13 @@ namespace SansyHuman.TWHG.UI
                 {
                     
                 }
-                else // Select only the pointed object
+                else
                 {
-                    ClearSelectedObjects();
-                    AddSelectedObjects(nameField.ObjectUI);
+                    if (_lastPointedFieldAlreadySelected)
+                    {
+                        ClearSelectedObjects();
+                        AddSelectedObjects(_lastPointedField.ObjectUI);
+                    }
                 }
             }
             else // Let selected object to be the children of nameField.
@@ -177,6 +200,33 @@ namespace SansyHuman.TWHG.UI
                 
             _lastSelectedObject = _lastPointedField.ObjectUI.ConnectedObject;
 
+            _pointerDown = false;
+            _ctrlPressed = false;
+            _shiftPressed = false;
+            _lastPointedFieldAlreadySelected = false;
+        }
+
+        private void OnScrollRectPointerDown()
+        {
+            // Deselect all objects.
+            ClearSelectedObjects();
+        }
+
+        private void OnScrollRectPointerUp()
+        {
+            if (!_pointerDown)
+            {
+                return;
+            }
+            
+            // Make all selected objects to root objects
+            foreach (var obj in _selectedObjects)
+            {
+                ChangeParent(_objNodePairs[obj].Value, null, false);
+            }
+            
+            Refresh();
+            
             _pointerDown = false;
             _ctrlPressed = false;
             _shiftPressed = false;
@@ -234,7 +284,7 @@ namespace SansyHuman.TWHG.UI
         private Stack<LinkedListNode<HierarchyObject>> _changeParentTmp = new Stack<LinkedListNode<HierarchyObject>>();
         private void ChangeParent(HierarchyObject child, HierarchyObject newParent, bool refresh = true)
         {
-            if (child.Parent == newParent.ConnectedObject)
+            if (newParent && child.Parent == newParent.ConnectedObject)
             {
                 return;
             }
@@ -242,15 +292,23 @@ namespace SansyHuman.TWHG.UI
             LinkedListNode<HierarchyObject> childNode = _objNodePairs[child.ConnectedObject];
             LinkedListNode<HierarchyObject> prevChildNode = childNode.Previous;
             LinkedListNode<HierarchyObject> childLastChildNode = _objNodePairs[child.LastChild ?? child.ConnectedObject];
-            LinkedListNode<HierarchyObject> newParentNode = _objNodePairs[newParent.ConnectedObject];
-            LinkedListNode<HierarchyObject> newPrevChildNode = _objNodePairs[newParent.LastChild ?? newParent.ConnectedObject];
-            if (newPrevChildNode == childNode) // If the last child of the new parent is itself, new last child is the previous node
+
+            if (child.Parent)
             {
-                newPrevChildNode = newPrevChildNode.Previous;
+                LinkedListNode<HierarchyObject> parentNode = _objNodePairs[child.Parent];
+                parentNode.Value.RemoveChild(child, !newParent);
+            }
+            LinkedListNode<HierarchyObject> newPrevChildNode = null;
+            if (newParent)
+            {
+                newPrevChildNode = _objNodePairs[newParent.LastChild ?? newParent.ConnectedObject];
+                newParent.AddChild(child);
+            }
+            else
+            {
+                newPrevChildNode = _objects.Last;
             }
             
-            newParentNode.Value.AddChild(childNode.Value);
-
             LinkedListNode<HierarchyObject> nextToRemove = childLastChildNode;
             do
             {

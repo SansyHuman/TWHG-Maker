@@ -1,4 +1,6 @@
+using System;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
@@ -9,22 +11,43 @@ namespace SansyHuman.TWHG.UI
     /// </summary>
     public class ScrollRectNoDrag : ScrollRect, IPointerDownHandler, IPointerUpHandler, IDropHandler
     {
+        [Serializable]
+        public class ScrollRectClickEvent : UnityEvent {}
+
+        /// <summary>
+        /// Event called when the pointer down event occured on the scroll rect.
+        /// </summary>
+        public ScrollRectClickEvent onPointerDown;
+        
+        /// <summary>
+        /// Event called when the pointer up event occured on the scroll rect.
+        /// </summary>
+        public ScrollRectClickEvent onPointerUp;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            
+            onPointerDown ??= new ScrollRectClickEvent();
+            onPointerUp ??= new ScrollRectClickEvent();
+        }
+
         public override void OnBeginDrag(PointerEventData eventData) { }
         public override void OnDrag(PointerEventData eventData) { }
         public override void OnEndDrag(PointerEventData eventData) { }
         public void OnPointerDown(PointerEventData eventData)
         {
-            UnityEngine.Debug.Log("Scroll rect pointer down.");
+            onPointerDown.Invoke();
         }
 
         public void OnPointerUp(PointerEventData eventData)
         {
-            UnityEngine.Debug.Log("Scroll rect pointer up.");
+            onPointerUp.Invoke();
         }
 
         public void OnDrop(PointerEventData eventData)
         {
-            UnityEngine.Debug.Log("Scroll rect drop.");
+            onPointerUp.Invoke();
         }
     }
 }

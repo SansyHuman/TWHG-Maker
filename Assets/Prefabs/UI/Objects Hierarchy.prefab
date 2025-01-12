@@ -446,6 +446,12 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+  onPointerDown:
+    m_PersistentCalls:
+      m_Calls: []
+  onPointerUp:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &4556949836004122365
 GameObject:
   m_ObjectHideFlags: 0
@@ -761,6 +767,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hierarchyWindow: {fileID: 3935631549217746668}
+  hierarchyViewer: {fileID: 5149834093134021029}
   objectPrefab: {fileID: 3506576281969948113, guid: edcb954041316e6448262b9455496c94, type: 3}
 --- !u!1 &8311578120636445650
 GameObject:
