@@ -135,6 +135,53 @@ namespace SansyHuman.TWHG.UI
             }
             else if (InputSystem.Actions.Editor.Shift.IsPressed())
             {
+                if (!_lastSelectedObject || !_objNodePairs[_lastSelectedObject].Value.gameObject.activeInHierarchy)
+                {
+                    ClearSelectedObjects();
+                    AddSelectedObjects(nameField.ObjectUI);
+                }
+                else
+                {
+                    // Select all objects between nameField and _lastSelectedObject
+                    LinkedListNode<HierarchyObject> lastSelected = _objNodePairs[_lastSelectedObject];
+                    LinkedListNode<HierarchyObject> lastPointed = _objNodePairs[nameField.ObjectUI.ConnectedObject];
+                    if (lastSelected == lastPointed)
+                    {
+                        return;
+                    }
+
+                    LinkedListNode<HierarchyObject> prevTmp = lastSelected;
+                    LinkedListNode<HierarchyObject> nextTmp = lastSelected;
+                    bool prev = false;
+                    bool next = false;
+
+                    while (prevTmp != null || nextTmp != null)
+                    {
+                        prevTmp = prevTmp?.Previous;
+                        nextTmp = nextTmp?.Next;
+
+                        if (prevTmp == lastPointed)
+                        {
+                            prev = true;
+                            break;
+                        }
+                        if (nextTmp == lastPointed)
+                        {
+                            next = true;
+                            break;
+                        }
+                    }
+
+                    if (prev)
+                    {
+                        AddSelectedObjects(lastPointed, lastSelected);
+                    }
+                    else if (next)
+                    {
+                        AddSelectedObjects(lastSelected, lastPointed);
+                    }
+                }
+                
                 _shiftPressed = true;
             }
             else
@@ -156,6 +203,7 @@ namespace SansyHuman.TWHG.UI
         {
             if (!_lastPointedField || !_pointerDown)
             {
+                _lastSelectedObject = null;
                 return;
             }
             
@@ -167,6 +215,7 @@ namespace SansyHuman.TWHG.UI
                     {
                         _lastPointedField.Selected = false;
                         RemoveSelectedObjects(_lastPointedField.ObjectUI);
+                        _lastPointedField = null;
                     }
                 }
                 else if (_shiftPressed)
@@ -198,7 +247,7 @@ namespace SansyHuman.TWHG.UI
                 Refresh();
             }
                 
-            _lastSelectedObject = _lastPointedField.ObjectUI.ConnectedObject;
+            _lastSelectedObject = _lastPointedField?.ObjectUI.ConnectedObject;
 
             _pointerDown = false;
             _ctrlPressed = false;
@@ -210,6 +259,8 @@ namespace SansyHuman.TWHG.UI
         {
             // Deselect all objects.
             ClearSelectedObjects();
+            _lastPointedField = null;
+            _lastSelectedObject = null;
         }
 
         private void OnScrollRectPointerUp()
@@ -222,10 +273,16 @@ namespace SansyHuman.TWHG.UI
             // Make all selected objects to root objects
             foreach (var obj in _selectedObjects)
             {
+                if (!_objNodePairs[obj].Value.Parent)
+                {
+                    continue;
+                }
                 ChangeParent(_objNodePairs[obj].Value, null, false);
             }
             
             Refresh();
+            
+            _lastSelectedObject = _lastPointedField?.ObjectUI.ConnectedObject;
             
             _pointerDown = false;
             _ctrlPressed = false;
@@ -237,6 +294,11 @@ namespace SansyHuman.TWHG.UI
         {
             for (int i = 0; i < objects.Length; i++)
             {
+                if (!objects[i].gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+                
                 ObjectEditorData obj = objects[i].ConnectedObject;
                 if (_selectedObjNodePairs.ContainsKey(obj))
                 {
@@ -246,6 +308,32 @@ namespace SansyHuman.TWHG.UI
                 LinkedListNode<ObjectEditorData> newNode = _selectedObjects.AddLast(obj);
                 _selectedObjNodePairs.Add(obj, newNode);
                 objects[i].Selected = true;
+            }
+        }
+
+        private void AddSelectedObjects(LinkedListNode<HierarchyObject> first, LinkedListNode<HierarchyObject> last)
+        {
+            for (var current = first; current != last.Next; current = current.Next)
+            {
+                if (current == null)
+                {
+                    break;
+                }
+
+                if (!current.Value.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+                
+                ObjectEditorData obj = current.Value.ConnectedObject;
+                if (_selectedObjNodePairs.ContainsKey(obj))
+                {
+                    continue;
+                }
+
+                LinkedListNode<ObjectEditorData> newNode = _selectedObjects.AddLast(obj);
+                _selectedObjNodePairs.Add(obj, newNode);
+                current.Value.Selected = true;
             }
         }
 
@@ -307,6 +395,11 @@ namespace SansyHuman.TWHG.UI
             else
             {
                 newPrevChildNode = _objects.Last;
+                if (newPrevChildNode == childNode)
+                {
+                    // The child node is the last object of the hierarchy. Change new prev child to previous one.
+                    newPrevChildNode = newPrevChildNode.Previous;
+                }
             }
             
             LinkedListNode<HierarchyObject> nextToRemove = childLastChildNode;
