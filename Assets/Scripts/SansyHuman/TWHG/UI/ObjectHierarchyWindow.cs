@@ -1,9 +1,11 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using SansyHuman.TWHG.Core;
 using SansyHuman.TWHG.Objects;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using InputSystem = SansyHuman.TWHG.Core.InputSystem;
 
 namespace SansyHuman.TWHG.UI
 {
@@ -97,6 +99,47 @@ namespace SansyHuman.TWHG.UI
                 _objNodePairs.Add(obj, newNode);
             }
 
+            Refresh();
+        }
+
+        /// <summary>
+        /// Destroys the object and removes it from the hierarchy window.
+        /// </summary>
+        /// <param name="obj">Object to destroy.</param>
+        public void DestroyObject(ObjectEditorData obj)
+        {
+            if (!_objNodePairs.ContainsKey(obj))
+            {
+                UnityEngine.Debug.LogWarning($"The object {obj.name} does not exist.");
+                return;
+            }
+
+            LinkedListNode<HierarchyObject> objNode = _objNodePairs[obj];
+            LinkedListNode<HierarchyObject> lastChildNode = _objNodePairs[objNode.Value.LastChild ?? obj];
+            LinkedListNode<HierarchyObject> lastChildNextNode = lastChildNode.Next;
+
+            HierarchyObject objUi = objNode.Value;
+            
+            if (objUi.Parent)
+            {
+                _objNodePairs[objUi.Parent].Value.RemoveChild(objUi, false);
+            }
+
+            LinkedListNode<HierarchyObject> current = objNode;
+            while (current != lastChildNextNode)
+            {
+                LinkedListNode<HierarchyObject> next = current.Next;
+                
+                RemoveSelectedObjects(current.Value);
+                _objNodePairs.Remove(current.Value.ConnectedObject);
+                _objects.Remove(current);
+
+                current = next;
+            }
+            
+            Destroy(objUi.ConnectedObject.gameObject);
+            Destroy(objUi.gameObject);
+            
             Refresh();
         }
 
@@ -311,6 +354,14 @@ namespace SansyHuman.TWHG.UI
             }
         }
 
+        private void OnDeletePressed(InputAction.CallbackContext context)
+        {
+            while (_selectedObjects.Count > 0)
+            {
+                DestroyObject(_selectedObjects.First.Value);
+            }
+        }
+
         private void AddSelectedObjects(LinkedListNode<HierarchyObject> first, LinkedListNode<HierarchyObject> last)
         {
             for (var current = first; current != last.Next; current = current.Next)
@@ -443,6 +494,16 @@ namespace SansyHuman.TWHG.UI
             yield return _wait;
             LayoutRebuilder.ForceRebuildLayoutImmediate(tr);
             Canvas.ForceUpdateCanvases();
+        }
+
+        private void OnEnable()
+        {
+            InputSystem.Actions.Editor.Del.performed += OnDeletePressed;
+        }
+
+        void OnDisable()
+        {
+            InputSystem.Actions.Editor.Del.performed -= OnDeletePressed;
         }
     }
 }

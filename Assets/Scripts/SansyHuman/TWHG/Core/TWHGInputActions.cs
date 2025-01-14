@@ -100,6 +100,15 @@ namespace SansyHuman.TWHG.Core
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Del"",
+                    ""type"": ""Button"",
+                    ""id"": ""0f6b7087-23e9-4f3e-a85f-f6be9b7f9149"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -232,6 +241,17 @@ namespace SansyHuman.TWHG.Core
                     ""processors"": """",
                     ""groups"": ""PC"",
                     ""action"": ""Shift"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f943437a-171c-4fe5-830b-96a24407de04"",
+                    ""path"": ""<Keyboard>/delete"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""PC"",
+                    ""action"": ""Del"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -394,6 +414,7 @@ namespace SansyHuman.TWHG.Core
             m_Editor_Alt = m_Editor.FindAction("Alt", throwIfNotFound: true);
             m_Editor_Ctrl = m_Editor.FindAction("Ctrl", throwIfNotFound: true);
             m_Editor_Shift = m_Editor.FindAction("Shift", throwIfNotFound: true);
+            m_Editor_Del = m_Editor.FindAction("Del", throwIfNotFound: true);
             // Game
             m_Game = asset.FindActionMap("Game", throwIfNotFound: true);
             m_Game_Move = m_Game.FindAction("Move", throwIfNotFound: true);
@@ -466,6 +487,7 @@ namespace SansyHuman.TWHG.Core
         private readonly InputAction m_Editor_Alt;
         private readonly InputAction m_Editor_Ctrl;
         private readonly InputAction m_Editor_Shift;
+        private readonly InputAction m_Editor_Del;
         public struct EditorActions
         {
             private @TWHGInputActions m_Wrapper;
@@ -478,6 +500,7 @@ namespace SansyHuman.TWHG.Core
             public InputAction @Alt => m_Wrapper.m_Editor_Alt;
             public InputAction @Ctrl => m_Wrapper.m_Editor_Ctrl;
             public InputAction @Shift => m_Wrapper.m_Editor_Shift;
+            public InputAction @Del => m_Wrapper.m_Editor_Del;
             public InputActionMap Get() { return m_Wrapper.m_Editor; }
             public void Enable() { Get().Enable(); }
             public void Disable() { Get().Disable(); }
@@ -511,6 +534,9 @@ namespace SansyHuman.TWHG.Core
                 @Shift.started += instance.OnShift;
                 @Shift.performed += instance.OnShift;
                 @Shift.canceled += instance.OnShift;
+                @Del.started += instance.OnDel;
+                @Del.performed += instance.OnDel;
+                @Del.canceled += instance.OnDel;
             }
 
             private void UnregisterCallbacks(IEditorActions instance)
@@ -539,6 +565,9 @@ namespace SansyHuman.TWHG.Core
                 @Shift.started -= instance.OnShift;
                 @Shift.performed -= instance.OnShift;
                 @Shift.canceled -= instance.OnShift;
+                @Del.started -= instance.OnDel;
+                @Del.performed -= instance.OnDel;
+                @Del.canceled -= instance.OnDel;
             }
 
             public void RemoveCallbacks(IEditorActions instance)
@@ -621,6 +650,7 @@ namespace SansyHuman.TWHG.Core
             void OnAlt(InputAction.CallbackContext context);
             void OnCtrl(InputAction.CallbackContext context);
             void OnShift(InputAction.CallbackContext context);
+            void OnDel(InputAction.CallbackContext context);
         }
         public interface IGameActions
         {
