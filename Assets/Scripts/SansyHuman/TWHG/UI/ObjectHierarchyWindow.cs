@@ -21,6 +21,9 @@ namespace SansyHuman.TWHG.UI
         [Tooltip("Object that contains the scroll rect which contains all objects.")]
         [SerializeField] private ScrollRectNoDrag hierarchyViewer;
 
+        [Tooltip("Object that shows selected objects with rectangle.")]
+        [SerializeField] private SelectedObjects selectionRect;
+
         [Tooltip("Prefab for UI element of object in hierarchy window.")]
         [SerializeField] private HierarchyObject objectPrefab;
 
@@ -332,6 +335,14 @@ namespace SansyHuman.TWHG.UI
             _shiftPressed = false;
             _lastPointedFieldAlreadySelected = false;
         }
+        
+        private void OnDeletePressed(InputAction.CallbackContext context)
+        {
+            while (_selectedObjects.Count > 0)
+            {
+                DestroyObject(_selectedObjects.First.Value);
+            }
+        }
 
         private void AddSelectedObjects(params HierarchyObject[] objects)
         {
@@ -351,17 +362,10 @@ namespace SansyHuman.TWHG.UI
                 LinkedListNode<ObjectEditorData> newNode = _selectedObjects.AddLast(obj);
                 _selectedObjNodePairs.Add(obj, newNode);
                 objects[i].Selected = true;
+                selectionRect.AddSelectedObject(objects[i].ConnectedObject.gameObject);
             }
         }
-
-        private void OnDeletePressed(InputAction.CallbackContext context)
-        {
-            while (_selectedObjects.Count > 0)
-            {
-                DestroyObject(_selectedObjects.First.Value);
-            }
-        }
-
+        
         private void AddSelectedObjects(LinkedListNode<HierarchyObject> first, LinkedListNode<HierarchyObject> last)
         {
             for (var current = first; current != last.Next; current = current.Next)
@@ -385,6 +389,7 @@ namespace SansyHuman.TWHG.UI
                 LinkedListNode<ObjectEditorData> newNode = _selectedObjects.AddLast(obj);
                 _selectedObjNodePairs.Add(obj, newNode);
                 current.Value.Selected = true;
+                selectionRect.AddSelectedObject(current.Value.ConnectedObject.gameObject);
             }
         }
 
@@ -401,6 +406,7 @@ namespace SansyHuman.TWHG.UI
                 _selectedObjects.Remove(_selectedObjNodePairs[obj]);
                 _selectedObjNodePairs.Remove(obj);
                 objects[i].Selected = false;
+                selectionRect.RemoveSelectedObject(objects[i].ConnectedObject.gameObject);
             }
         }
 
@@ -414,6 +420,7 @@ namespace SansyHuman.TWHG.UI
                 }
 
                 _objNodePairs[obj].Value.Selected = false;
+                selectionRect.RemoveSelectedObject(obj.gameObject);
             }
 
             _selectedObjects.Clear();

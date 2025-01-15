@@ -34,6 +34,10 @@ namespace SansyHuman.TWHG.UI
             transform.position = Vector3.zero;
         }
 
+        /// <summary>
+        /// Adds selected object.
+        /// </summary>
+        /// <param name="selectedObject">Object selected.</param>
         public void AddSelectedObject(GameObject selectedObject)
         {
             if (_selectedObjects.Contains(selectedObject))
@@ -46,6 +50,10 @@ namespace SansyHuman.TWHG.UI
             UpdateBox();
         }
 
+        /// <summary>
+        /// Remove selected object.
+        /// </summary>
+        /// <param name="selectedObject">Object deselected.</param>
         public void RemoveSelectedObject(GameObject selectedObject)
         {
             if (!_selectedObjects.Contains(selectedObject))
@@ -58,7 +66,10 @@ namespace SansyHuman.TWHG.UI
             UpdateBox();
         }
 
-        private void UpdateBox()
+        /// <summary>
+        /// Updates the box position and size.
+        /// </summary>
+        public void UpdateBox()
         {
             if (_selectedObjects.Count == 0)
             {
