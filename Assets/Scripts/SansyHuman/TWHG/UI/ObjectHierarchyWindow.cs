@@ -277,20 +277,24 @@ namespace SansyHuman.TWHG.UI
                     }
                 }
             }
-            else // Let selected object to be the children of nameField.
+            else // Let selected objects to be the children of nameField.
             {
-                HierarchyObject newParent = nameField.ObjectUI;
-                foreach (var obj in _selectedObjects)
+                // ... only when the new parent is not selected object.
+                if (!_selectedObjNodePairs.ContainsKey(nameField.ObjectUI.ConnectedObject))
                 {
-                    ChangeParent(_objNodePairs[obj].Value, newParent, false);
-                }
+                    HierarchyObject newParent = nameField.ObjectUI;
+                    foreach (var obj in _selectedObjects)
+                    {
+                        ChangeParent(_objNodePairs[obj].Value, newParent, false);
+                    }
                 
-                if (!newParent.Expanded)
-                {
-                    newParent.OnExpandButtonClick();
-                }
+                    if (!newParent.Expanded)
+                    {
+                        newParent.OnExpandButtonClick();
+                    }
 
-                Refresh();
+                    Refresh();
+                }
             }
                 
             _lastSelectedObject = _lastPointedField?.ObjectUI.ConnectedObject;
@@ -352,6 +356,11 @@ namespace SansyHuman.TWHG.UI
                 {
                     continue;
                 }
+
+                if (!objects[i].ConnectedObject.selectable)
+                {
+                    continue;
+                }
                 
                 ObjectEditorData obj = objects[i].ConnectedObject;
                 if (_selectedObjNodePairs.ContainsKey(obj))
@@ -376,6 +385,11 @@ namespace SansyHuman.TWHG.UI
                 }
 
                 if (!current.Value.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                if (!current.Value.ConnectedObject.selectable)
                 {
                     continue;
                 }
@@ -430,6 +444,16 @@ namespace SansyHuman.TWHG.UI
         private Stack<LinkedListNode<HierarchyObject>> _changeParentTmp = new Stack<LinkedListNode<HierarchyObject>>();
         private void ChangeParent(HierarchyObject child, HierarchyObject newParent, bool refresh = true)
         {
+            if (!child.ConnectedObject.canHaveParent)
+            {
+                return;
+            }
+
+            if (newParent && !newParent.ConnectedObject.canHaveChildren)
+            {
+                return;
+            }
+            
             if (newParent && child.Parent == newParent.ConnectedObject)
             {
                 return;

@@ -510,7 +510,7 @@ MonoBehaviour:
   hasGizmo: 0
   gizmoIcon: {fileID: 0}
   gizmoSize: {x: 0, y: 0}
-  selectable: 1
+  selectable: 0
   canHaveParent: 1
   canHaveChildren: 1
   canMove: 0
@@ -1398,7 +1398,7 @@ MonoBehaviour:
   gizmoIcon: {fileID: 0}
   gizmoSize: {x: 0, y: 0}
   selectable: 1
-  canHaveParent: 1
+  canHaveParent: 0
   canHaveChildren: 1
   canMove: 0
   canRotate: 0
@@ -1615,7 +1615,7 @@ MonoBehaviour:
   gizmoSize: {x: 0, y: 0}
   selectable: 1
   canHaveParent: 1
-  canHaveChildren: 1
+  canHaveChildren: 0
   canMove: 0
   canRotate: 0
   canScale: 0
@@ -1705,7 +1705,7 @@ MonoBehaviour:
   hasGizmo: 0
   gizmoIcon: {fileID: 0}
   gizmoSize: {x: 0, y: 0}
-  selectable: 1
+  selectable: 0
   canHaveParent: 1
   canHaveChildren: 1
   canMove: 0

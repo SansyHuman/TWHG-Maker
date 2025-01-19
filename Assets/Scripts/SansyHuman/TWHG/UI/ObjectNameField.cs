@@ -50,7 +50,18 @@ namespace SansyHuman.TWHG.UI
             get => _selected;
             set
             {
+                if (!objectUI.ConnectedObject.selectable)
+                {
+                    _selected = false;
+                    return;
+                }
+                
                 _selected = value;
+                if (!objectUI.ConnectedObject.selectable)
+                {
+                    _selected = false;
+                }
+                
                 if (_selected)
                 {
                     _field.color = selectColor;
@@ -118,6 +129,10 @@ namespace SansyHuman.TWHG.UI
             onObjectPointerUp ??= new ObjectNameFieldEvent();
             
             _field = GetComponent<RawImage>();
+        }
+
+        private void Start()
+        {
             Selected = false;
             Hover = false;
         }
@@ -134,7 +149,7 @@ namespace SansyHuman.TWHG.UI
 
         public void OnPointerDown(PointerEventData eventData)
         {
-            if (eventData.button == PointerEventData.InputButton.Left)
+            if (objectUI.ConnectedObject.selectable && eventData.button == PointerEventData.InputButton.Left)
             {
                 Selected = true;
                 onObjectPointerDown.Invoke(this);
