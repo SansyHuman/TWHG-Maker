@@ -244,7 +244,7 @@ namespace SansyHuman.TWHG.Core.Collections
                 return false;
             }
 
-            var node = _index[key];
+            _index.Remove(key, out var node);
             _list.Remove(node);
             return true;
         }
@@ -296,7 +296,7 @@ namespace SansyHuman.TWHG.Core.Collections
             }
             else
             {
-                value = default(T);
+                value = default;
             }
             
             return exists;
@@ -527,7 +527,13 @@ namespace SansyHuman.TWHG.Core.Collections
         /// <returns>true if the node successfully removed. Else, false.</returns>
         public bool RemoveByKey(TKey key)
         {
-            return ((IDictionary<TKey, LinkedListNode<T>>)_index).Remove(key);
+            bool removed = ((IDictionary<TKey, LinkedListNode<T>>)_index).Remove(key, out var node);
+            if (removed)
+            {
+                _list.Remove(node);
+            }
+
+            return removed;
         }
 
         /// <summary>
@@ -565,5 +571,20 @@ namespace SansyHuman.TWHG.Core.Collections
         /// Gets the last node of the LinkedList.
         /// </summary>
         public LinkedListNode<T> Last => _list.Last;
+
+        /// <summary>
+        /// Gets the node indexed by the key.
+        /// </summary>
+        /// <param name="key">Key to find.</param>
+        /// <returns>LinkedListNode indexed by the key.</returns>
+        public LinkedListNode<T> GetNode(TKey key)
+        {
+            if (_index.ContainsKey(key))
+            {
+                return _index[key];
+            }
+
+            return null;
+        }
     }
 }
