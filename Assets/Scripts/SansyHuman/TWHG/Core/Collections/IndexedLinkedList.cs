@@ -8,20 +8,102 @@ namespace SansyHuman.TWHG.Core.Collections
     /// <summary>
     /// Collection that the linked list nodes are indexed by hash.
     /// </summary>
-    public class IndexedLinkedList<T, TKey> : System.Collections.Generic.ICollection<T>,
-        System.Collections.Generic.IEnumerable<T>, System.Collections.Generic.IReadOnlyCollection<T>,
-        System.Collections.ICollection, System.Collections.Generic.IDictionary<TKey, T>,
-        System.Collections.Generic.IReadOnlyDictionary<TKey, T>, System.Collections.IDictionary
+    public class IndexedLinkedList<T, TKey> : ICollection<T>, IReadOnlyCollection<T>, IDictionary<TKey, T>,
+        IReadOnlyDictionary<TKey, T>, IDictionary
     {
         private readonly Dictionary<TKey, LinkedListNode<T>> _index = new();
         private readonly LinkedList<T> _list = new();
-
+        private int _version = 0;
+        
+        void ICollection<T>.Add(T item)
+        {
+            throw new NotImplementedException();
+        }
+        
+        void IDictionary.Add(object key, object value)
+        {
+            if (key is TKey tkey && _index.ContainsKey(tkey))
+            {
+                throw new ArgumentException("An item with the same key has already been added.");
+            }
+            
+            ((IDictionary)this)[key] = value;
+        }
+        
+        void ICollection<KeyValuePair<TKey, T>>.Add(KeyValuePair<TKey, T> item)
+        {
+            this[item.Key] = item.Value;
+        }
+        
+        void IDictionary<TKey, T>.Add(TKey key, T value)
+        {
+            if (_index.ContainsKey(key))
+            {
+                throw new ArgumentException("key already exists.");
+            }
+            
+            this[key] = value;
+        }
+        
         public void CopyTo(Array array, int index)
         {
             ((ICollection)_list).CopyTo(array, index);
         }
+        
+        public void CopyTo(T[] array, int arrayIndex)
+        {
+            _list.CopyTo(array, arrayIndex);
+        }
+        
+        void ICollection<KeyValuePair<TKey, T>>.CopyTo(KeyValuePair<TKey, T>[] array, int arrayIndex)
+        {
+            if (array == null)
+            {
+                throw new ArgumentNullException(nameof(array));
+            }
+
+            if (arrayIndex < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+            }
+
+            if (Count > array.Length - arrayIndex)
+            {
+                throw new ArgumentException("The size of the array is not enough to copy all the items in the collection.");
+            }
+
+            foreach (var kvp in _index)
+            {
+                array[arrayIndex++] = new KeyValuePair<TKey, T>(kvp.Key, kvp.Value.Value);
+            }
+        }
+                
+        public void Clear()
+        {
+            _list.Clear();
+            _index.Clear();
+            _version++;
+        }
+        
+        void IDictionary.Clear()
+        {
+            ((ICollection<T>)this).Clear();
+        }
+        
+        void ICollection<KeyValuePair<TKey, T>>.Clear()
+        {
+            ((ICollection<T>)this).Clear();
+        }
 
         public int Count => _list.Count;
+
+        int ICollection<T>.Count => ((ICollection)this).Count;
+        
+        int ICollection<KeyValuePair<TKey, T>>.Count => ((ICollection)this).Count;
+        
+        int IReadOnlyCollection<T>.Count => ((ICollection)this).Count;
+        
+        int IReadOnlyCollection<KeyValuePair<TKey, T>>.Count => ((ICollection)this).Count;
 
         public bool IsSynchronized => false;
         public object SyncRoot => this;
@@ -33,18 +115,145 @@ namespace SansyHuman.TWHG.Core.Collections
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return _list.GetEnumerator();
+            return ((IEnumerable<T>)this).GetEnumerator();
+        }
+        
+        IDictionaryEnumerator IDictionary.GetEnumerator()
+        {
+            return new Enumerator(this, Enumerator.EnumeratorType.DictEntry);
+        }
+        
+        IEnumerator<KeyValuePair<TKey, T>> IEnumerable<KeyValuePair<TKey, T>>.GetEnumerator()
+        {
+            return new Enumerator(this, Enumerator.EnumeratorType.KeyValuePair);
         }
 
-        void ICollection<T>.Add(T item)
+        [Serializable]
+        public struct Enumerator : IEnumerator<KeyValuePair<TKey, T>>, IDictionaryEnumerator
         {
-            throw new NotImplementedException();
-        }
+            private IndexedLinkedList<T, TKey> _list;
+            private IEnumerator<TKey> _keyEnumerator;
+            private bool _valid;
+            private int _version;
+            private KeyValuePair<TKey, T> _current;
+            private EnumeratorType _enumeratorType;
 
-        public void Clear()
-        {
-            _list.Clear();
-            _index.Clear();
+            public enum EnumeratorType
+            {
+                DictEntry,
+                KeyValuePair
+            }
+
+            public Enumerator(IndexedLinkedList<T, TKey> list, EnumeratorType enumeratorType)
+            {
+                _list = list;
+                _keyEnumerator = list.Keys.GetEnumerator();
+                _version = list._version;
+                _valid = false;
+                _enumeratorType = enumeratorType;
+                _current = new KeyValuePair<TKey, T>();
+            }
+
+            public KeyValuePair<TKey, T> Current => _current;
+
+            object IEnumerator.Current
+            {
+                get
+                {
+                    if (!_valid)
+                    {
+                        throw new InvalidOperationException("Enumerator is not valid.");
+                    }
+
+                    if (_enumeratorType == EnumeratorType.DictEntry)
+                    {
+                        return new DictionaryEntry(_current.Key, _current.Value);
+                    }
+                    else
+                    {
+                        return _current;
+                    }
+                }
+            }
+            
+            public bool MoveNext()
+            {
+                if (_version != _list._version)
+                {
+                    _valid = false;
+                    throw new InvalidOperationException("Collection was modified while enumerating the list.");
+                }
+
+                bool hasNext = _keyEnumerator.MoveNext();
+                if (hasNext)
+                {
+                    _valid = true;
+                    _current = new KeyValuePair<TKey, T>(_keyEnumerator.Current, _list.GetNode(_keyEnumerator.Current).Value);
+                }
+                else
+                {
+                    _valid = false;
+                    _current = new KeyValuePair<TKey, T>();
+                }
+
+                return hasNext;
+            }
+
+            public void Reset()
+            {
+                if (_version != _list._version)
+                {
+                    _valid = false;
+                    throw new InvalidOperationException("Collection was modified while enumerating the list.");
+                }
+
+                _keyEnumerator.Reset();
+                _valid = false;
+            }
+
+            public void Dispose()
+            {
+                
+            }
+
+            DictionaryEntry IDictionaryEnumerator.Entry
+            {
+                get
+                {
+                    if (!_valid)
+                    {
+                        throw new InvalidOperationException("Enumerator is not valid.");
+                    }
+                    
+                    return new DictionaryEntry(_current.Key, _current.Value);
+                }
+            }
+
+            object IDictionaryEnumerator.Key
+            {
+                get
+                {
+                    if (!_valid)
+                    {
+                        throw new InvalidOperationException("Enumerator is not valid.");
+                    }
+
+                    return _current.Key;
+                }
+            }
+
+            object IDictionaryEnumerator.Value
+            {
+                get
+                {
+                    if (!_valid)
+                    {
+                        throw new InvalidOperationException("Enumerator is not valid.");
+                    }
+                    
+                    return _current.Value;
+                }
+            }
         }
 
         public bool Contains(T item)
@@ -52,9 +261,19 @@ namespace SansyHuman.TWHG.Core.Collections
             return _list.Contains(item);
         }
 
-        public void CopyTo(T[] array, int arrayIndex)
+        public bool Contains(object key)
         {
-            _list.CopyTo(array, arrayIndex);
+            if (key is TKey tkey)
+            {
+                return _index.ContainsKey(tkey);
+            }
+
+            return false;
+        }
+        
+        bool ICollection<KeyValuePair<TKey, T>>.Contains(KeyValuePair<TKey, T> item)
+        {
+            return _index.ContainsKey(item.Key) && _index[item.Key].Value.Equals(item.Value);
         }
 
         public bool Remove(T item)
@@ -69,31 +288,14 @@ namespace SansyHuman.TWHG.Core.Collections
                         break;
                     }
                 }
+
+                _version++;
                 return true;
             }
 
             return false;
         }
-
-        int ICollection<T>.Count => _list.Count;
-
-        bool ICollection<T>.IsReadOnly => false;
-
-        public bool Contains(object key)
-        {
-            if (key is TKey tkey)
-            {
-                return _index.ContainsKey(tkey);
-            }
-
-            return false;
-        }
-
-        IDictionaryEnumerator IDictionary.GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
-
+        
         void IDictionary.Remove(object key)
         {
             if (key == null)
@@ -101,96 +303,12 @@ namespace SansyHuman.TWHG.Core.Collections
                 throw new ArgumentNullException(nameof(key));
             }
             
-            if (key is TKey tkey && _index.ContainsKey(tkey))
+            if (key is TKey tkey)
             {
-                _index.Remove(tkey, out var removeNode);
-                _list.Remove(removeNode);
+                ((IDictionary<TKey, T>)this).Remove(tkey);
             }
         }
-
-        public bool IsFixedSize => false;
-
-        bool IDictionary.IsReadOnly => false;
-
-        object IDictionary.this[object key]
-        {
-            get
-            {
-                if (key == null)
-                {
-                    throw new ArgumentNullException(nameof(key));
-                }
-                
-                if (key is TKey tkey)
-                {
-                    return _index[tkey];
-                }
-
-                throw new NotSupportedException("Key is not of type " + typeof(TKey));
-            }
-
-            set
-            {
-                if (key == null)
-                {
-                    throw new ArgumentNullException(nameof(key));
-                }
-                
-                if (key is TKey tkey && value is T tvalue)
-                {
-                    if (_index.ContainsKey(tkey))
-                    {
-                        var node = _index[tkey];
-                        node.Value = tvalue;
-                    }
-                    else
-                    {
-                        var newNode = _list.AddLast(tvalue);
-                        _index.Add(tkey, newNode);
-                    }
-                }
-                else
-                {
-                    throw new NotSupportedException("Key is not of type " + typeof(TKey));
-                }
-            }
-        }
-
-        void IDictionary.Add(object key, object value)
-        {
-            ((IDictionary)this)[key] = value;
-        }
-
-        void IDictionary.Clear()
-        {
-            _list.Clear();
-            _index.Clear();
-        }
-
-        ICollection IDictionary.Values => _list;
-
-        ICollection IDictionary.Keys => _index.Keys;
-
-        IEnumerator<KeyValuePair<TKey, T>> IEnumerable<KeyValuePair<TKey, T>>.GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
-
-        void ICollection<KeyValuePair<TKey, T>>.Add(KeyValuePair<TKey, T> item)
-        {
-            this[item.Key] = item.Value;
-        }
-
-        bool ICollection<KeyValuePair<TKey, T>>.Contains(KeyValuePair<TKey, T> item)
-        {
-            return _index.ContainsKey(item.Key) && _index[item.Key].Equals(item.Value);
-        }
-
-        void ICollection<KeyValuePair<TKey, T>>.CopyTo(KeyValuePair<TKey, T>[] array, int arrayIndex)
-        {
-            throw new NotImplementedException();
-        }
-
+        
         bool ICollection<KeyValuePair<TKey, T>>.Remove(KeyValuePair<TKey, T> item)
         {
             if (_index.ContainsKey(item.Key))
@@ -200,38 +318,14 @@ namespace SansyHuman.TWHG.Core.Collections
                 {
                     _list.Remove(node);
                     _index.Remove(item.Key);
+                    _version++;
                     return true;
                 }
             }
 
             return false;
         }
-
-        void ICollection<KeyValuePair<TKey, T>>.Clear()
-        {
-            _list.Clear();
-            _index.Clear();
-        }
-
-        int ICollection<KeyValuePair<TKey, T>>.Count => _list.Count;
-
-        bool ICollection<KeyValuePair<TKey, T>>.IsReadOnly => false;
-
-        void IDictionary<TKey, T>.Add(TKey key, T value)
-        {
-            if (_index.ContainsKey(key))
-            {
-                throw new ArgumentException("key already exists.");
-            }
-            
-            this[key] = value;
-        }
-
-        public bool ContainsKey(TKey key)
-        {
-            return _index.ContainsKey(key);
-        }
-
+        
         bool IDictionary<TKey, T>.Remove(TKey key)
         {
             if (key == null)
@@ -246,14 +340,18 @@ namespace SansyHuman.TWHG.Core.Collections
 
             _index.Remove(key, out var node);
             _list.Remove(node);
+            _version++;
             return true;
         }
 
-        bool IDictionary<TKey, T>.TryGetValue(TKey key, out T value)
-        {
-            return ((IReadOnlyDictionary<TKey, T>)_index).TryGetValue(key, out value);
-        }
+        bool ICollection<T>.IsReadOnly => false;
 
+        bool IDictionary.IsReadOnly => ((ICollection<T>)this).IsReadOnly;
+        
+        bool ICollection<KeyValuePair<TKey, T>>.IsReadOnly => ((ICollection<T>)this).IsReadOnly;
+
+        public bool IsFixedSize => false;
+        
         public T this[TKey key]
         {
             get => _index[key].Value;
@@ -273,15 +371,68 @@ namespace SansyHuman.TWHG.Core.Collections
                     var newNode = _list.AddLast(value);
                     _index.Add(key, newNode);
                 }
+
+                _version++;
             }
         }
+        
+        object IDictionary.this[object key]
+        {
+            get
+            {
+                if (key == null)
+                {
+                    throw new ArgumentNullException(nameof(key));
+                }
+                
+                if (key is TKey tkey)
+                {
+                    return this[tkey];
+                }
 
+                throw new NotSupportedException("Key is not of type " + typeof(TKey));
+            }
+
+            set
+            {
+                if (key == null)
+                {
+                    throw new ArgumentNullException(nameof(key));
+                }
+                
+                if (key is TKey tkey && value is T tvalue)
+                {
+                    this[tkey] = tvalue;
+                }
+                else
+                {
+                    throw new NotSupportedException("Key is not of type " + typeof(TKey));
+                }
+            }
+        }
+        
+        public IEnumerable<T> Values => _list;
+        
+        ICollection IDictionary.Values => _list;
+        
+        ICollection<T> IDictionary<TKey, T>.Values => _list;
+        
+        public IEnumerable<TKey> Keys => _index.Keys;
+        
+        ICollection IDictionary.Keys => _index.Keys;
+        
         ICollection<TKey> IDictionary<TKey, T>.Keys => _index.Keys;
 
-        ICollection<T> IDictionary<TKey, T>.Values => _list;
-
-        int IReadOnlyCollection<T>.Count => _list.Count;
-
+        public bool ContainsKey(TKey key)
+        {
+            return _index.ContainsKey(key);
+        }
+        
+        bool IReadOnlyDictionary<TKey, T>.ContainsKey(TKey key)
+        {
+            return ((IDictionary<TKey, T>)this).ContainsKey(key);
+        }
+        
         public bool TryGetValue(TKey key, out T value)
         {
             if (key == null)
@@ -301,17 +452,11 @@ namespace SansyHuman.TWHG.Core.Collections
             
             return exists;
         }
-
-        bool IReadOnlyDictionary<TKey, T>.ContainsKey(TKey key)
+        
+        bool IDictionary<TKey, T>.TryGetValue(TKey key, out T value)
         {
-            return _index.ContainsKey(key);
+            return ((IReadOnlyDictionary<TKey, T>)this).TryGetValue(key, out value);
         }
-
-        public IEnumerable<TKey> Keys => _index.Keys;
-
-        public IEnumerable<T> Values => _list;
-
-        int IReadOnlyCollection<KeyValuePair<TKey, T>>.Count => _list.Count;
 
         /// <summary>
         /// Adds the specified new node after the specified existing node in the LinkedList.
@@ -347,7 +492,8 @@ namespace SansyHuman.TWHG.Core.Collections
             }
             
             _list.AddAfter(node, newNode);
-            _index[key] = newNode;
+            _index.Add(key, newNode);
+            _version++;
         }
 
         /// <summary>
@@ -398,7 +544,8 @@ namespace SansyHuman.TWHG.Core.Collections
             }
             
             _list.AddBefore(node, newNode);
-            _index[key] = newNode;
+            _index.Add(key, newNode);
+            _version++;
         }
 
         /// <summary>
@@ -438,7 +585,8 @@ namespace SansyHuman.TWHG.Core.Collections
             }
 
             _list.AddFirst(node);
-            _index[key] = node;
+            _index.Add(key, node);
+            _version++;
         }
 
         /// <summary>
@@ -477,7 +625,8 @@ namespace SansyHuman.TWHG.Core.Collections
             }
 
             _list.AddLast(node);
-            _index[key] = node;
+            _index.Add(key, node);
+            _version++;
         }
 
         /// <summary>
@@ -518,6 +667,7 @@ namespace SansyHuman.TWHG.Core.Collections
                 }
             }
             _list.Remove(node);
+            _version++;
         }
 
         /// <summary>
@@ -531,6 +681,7 @@ namespace SansyHuman.TWHG.Core.Collections
             if (removed)
             {
                 _list.Remove(node);
+                _version++;
             }
 
             return removed;
