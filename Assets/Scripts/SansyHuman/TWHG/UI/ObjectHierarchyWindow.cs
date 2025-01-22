@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using SansyHuman.TWHG.Core.Collections;
 using SansyHuman.TWHG.Objects;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -28,22 +29,17 @@ namespace SansyHuman.TWHG.UI
         [SerializeField] private HierarchyObject objectPrefab;
 
         // Objects in the hierarchy window in the order of UI elements.
-        private LinkedList<HierarchyObject> _objects;
-        // Dictionary for quick search for HierarchyObject connected to the object.
-        private Dictionary<ObjectEditorData, LinkedListNode<HierarchyObject>> _objNodePairs;
+        private IndexedLinkedList<HierarchyObject, ObjectEditorData> _objects;
 
         // Objects currently selected in the hierarchy.
-        private LinkedList<ObjectEditorData> _selectedObjects;
-        private Dictionary<ObjectEditorData, LinkedListNode<ObjectEditorData>> _selectedObjNodePairs;
+        private IndexedLinkedList<ObjectEditorData, ObjectEditorData> _selectedObjects;
         // Object lastly selected in the hierarchy.
         private ObjectEditorData _lastSelectedObject;
 
         void Awake()
         {
-            _objects = new LinkedList<HierarchyObject>();
-            _objNodePairs = new Dictionary<ObjectEditorData, LinkedListNode<HierarchyObject>>();
-            _selectedObjects = new LinkedList<ObjectEditorData>();
-            _selectedObjNodePairs = new Dictionary<ObjectEditorData, LinkedListNode<ObjectEditorData>>();
+            _objects = new IndexedLinkedList<HierarchyObject, ObjectEditorData>();
+            _selectedObjects = new IndexedLinkedList<ObjectEditorData, ObjectEditorData>();
             _lastSelectedObject = null;
             
             hierarchyViewer.onPointerDown.AddListener(OnScrollRectPointerDown);
@@ -56,7 +52,7 @@ namespace SansyHuman.TWHG.UI
         /// <param name="obj">Object to add.</param>
         public void AddObject(ObjectEditorData obj)
         {
-            if (_objNodePairs.ContainsKey(obj))
+            if (_objects.ContainsKey(obj))
             {
                 UnityEngine.Debug.LogWarning("Object already added to hierarchy window.");
                 return;
@@ -73,33 +69,30 @@ namespace SansyHuman.TWHG.UI
                 HierarchyObject hobj = Instantiate(objectPrefab, hierarchyWindow);
                 InitializeHierarchyObject(hobj, obj, null);
                 
-                LinkedListNode<HierarchyObject> newNode = _objects.AddLast(hobj); // Most recent root object is always at the last.
-                _objNodePairs.Add(obj, newNode);
+                _objects.AddLast(obj, hobj); // Most recent root object is always at the last.
             }
             else
             {
-                if (!_objNodePairs.ContainsKey(parent))
+                if (!_objects.ContainsKey(parent))
                 {
                     AddObject(parent);
                 }
                 
-                LinkedListNode<HierarchyObject> parentNode = _objNodePairs[parent];
+                LinkedListNode<HierarchyObject> parentNode = _objects.GetNode(parent);
                 ObjectEditorData lastChild = parentNode.Value.LastChild;
                 
                 HierarchyObject hobj = Instantiate(objectPrefab, hierarchyWindow);
                 InitializeHierarchyObject(hobj, obj, parentNode.Value);
-                
-                LinkedListNode<HierarchyObject> newNode = null;
+
                 if (!lastChild)
                 {
-                    newNode = _objects.AddAfter(parentNode, hobj);
+                    _objects.AddAfter(parentNode,obj, hobj);
                 }
                 else
                 {
-                    LinkedListNode<HierarchyObject> lastChildNode = _objNodePairs[lastChild];
-                    newNode = _objects.AddAfter(lastChildNode, hobj);
+                    LinkedListNode<HierarchyObject> lastChildNode = _objects.GetNode(lastChild);
+                    _objects.AddAfter(lastChildNode, obj, hobj);
                 }
-                _objNodePairs.Add(obj, newNode);
             }
 
             Refresh();
@@ -111,21 +104,21 @@ namespace SansyHuman.TWHG.UI
         /// <param name="obj">Object to destroy.</param>
         public void DestroyObject(ObjectEditorData obj)
         {
-            if (!_objNodePairs.ContainsKey(obj))
+            if (!_objects.ContainsKey(obj))
             {
                 UnityEngine.Debug.LogWarning($"The object {obj.name} does not exist.");
                 return;
             }
 
-            LinkedListNode<HierarchyObject> objNode = _objNodePairs[obj];
-            LinkedListNode<HierarchyObject> lastChildNode = _objNodePairs[objNode.Value.LastChild ?? obj];
+            LinkedListNode<HierarchyObject> objNode = _objects.GetNode(obj);
+            LinkedListNode<HierarchyObject> lastChildNode = _objects.GetNode(objNode.Value.LastChild ?? obj);
             LinkedListNode<HierarchyObject> lastChildNextNode = lastChildNode.Next;
 
             HierarchyObject objUi = objNode.Value;
             
             if (objUi.Parent)
             {
-                _objNodePairs[objUi.Parent].Value.RemoveChild(objUi, false);
+                _objects[objUi.Parent].RemoveChild(objUi, false);
             }
 
             LinkedListNode<HierarchyObject> current = objNode;
@@ -134,8 +127,7 @@ namespace SansyHuman.TWHG.UI
                 LinkedListNode<HierarchyObject> next = current.Next;
                 
                 RemoveSelectedObjects(current.Value);
-                _objNodePairs.Remove(current.Value.ConnectedObject);
-                _objects.Remove(current);
+                _objects.RemoveByKey(current.Value.ConnectedObject);
 
                 current = next;
             }
@@ -166,7 +158,7 @@ namespace SansyHuman.TWHG.UI
             _lastPointedField = nameField;
             if (InputSystem.Actions.Editor.Ctrl.IsPressed())
             {
-                if (_selectedObjNodePairs.ContainsKey(_lastPointedField.ObjectUI.ConnectedObject))
+                if (_selectedObjects.ContainsKey(_lastPointedField.ObjectUI.ConnectedObject))
                 {
                     // Deselect object after the pointer is up on the same field.
                     _lastPointedFieldAlreadySelected = true;
@@ -181,7 +173,7 @@ namespace SansyHuman.TWHG.UI
             }
             else if (InputSystem.Actions.Editor.Shift.IsPressed())
             {
-                if (!_lastSelectedObject || !_objNodePairs[_lastSelectedObject].Value.gameObject.activeInHierarchy)
+                if (!_lastSelectedObject || !_objects[_lastSelectedObject].gameObject.activeInHierarchy)
                 {
                     ClearSelectedObjects();
                     AddSelectedObjects(nameField.ObjectUI);
@@ -189,8 +181,8 @@ namespace SansyHuman.TWHG.UI
                 else
                 {
                     // Select all objects between nameField and _lastSelectedObject
-                    LinkedListNode<HierarchyObject> lastSelected = _objNodePairs[_lastSelectedObject];
-                    LinkedListNode<HierarchyObject> lastPointed = _objNodePairs[nameField.ObjectUI.ConnectedObject];
+                    LinkedListNode<HierarchyObject> lastSelected = _objects.GetNode(_lastSelectedObject);
+                    LinkedListNode<HierarchyObject> lastPointed = _objects.GetNode(nameField.ObjectUI.ConnectedObject);
                     if (lastSelected == lastPointed)
                     {
                         return;
@@ -232,7 +224,7 @@ namespace SansyHuman.TWHG.UI
             }
             else
             {
-                if (_selectedObjNodePairs.ContainsKey(_lastPointedField.ObjectUI.ConnectedObject))
+                if (_selectedObjects.ContainsKey(_lastPointedField.ObjectUI.ConnectedObject))
                 {
                     // Select only this object after the pointer is up on the same field.
                     _lastPointedFieldAlreadySelected = true;
@@ -280,12 +272,12 @@ namespace SansyHuman.TWHG.UI
             else // Let selected objects to be the children of nameField.
             {
                 // ... only when the new parent is not selected object.
-                if (!_selectedObjNodePairs.ContainsKey(nameField.ObjectUI.ConnectedObject))
+                if (!_selectedObjects.ContainsKey(nameField.ObjectUI.ConnectedObject))
                 {
                     HierarchyObject newParent = nameField.ObjectUI;
                     foreach (var obj in _selectedObjects)
                     {
-                        ChangeParent(_objNodePairs[obj].Value, newParent, false);
+                        ChangeParent(_objects[obj], newParent, false);
                     }
                 
                     if (!newParent.Expanded)
@@ -323,11 +315,11 @@ namespace SansyHuman.TWHG.UI
             // Make all selected objects to root objects
             foreach (var obj in _selectedObjects)
             {
-                if (!_objNodePairs[obj].Value.Parent)
+                if (!_objects[obj].Parent)
                 {
                     continue;
                 }
-                ChangeParent(_objNodePairs[obj].Value, null, false);
+                ChangeParent(_objects[obj], null, false);
             }
             
             Refresh();
@@ -363,13 +355,12 @@ namespace SansyHuman.TWHG.UI
                 }
                 
                 ObjectEditorData obj = objects[i].ConnectedObject;
-                if (_selectedObjNodePairs.ContainsKey(obj))
+                if (_selectedObjects.ContainsKey(obj))
                 {
                     continue;
                 }
-
-                LinkedListNode<ObjectEditorData> newNode = _selectedObjects.AddLast(obj);
-                _selectedObjNodePairs.Add(obj, newNode);
+                
+                _selectedObjects.AddLast(obj, obj);
                 objects[i].Selected = true;
                 selectionRect.AddSelectedObject(objects[i].ConnectedObject.gameObject);
             }
@@ -395,13 +386,12 @@ namespace SansyHuman.TWHG.UI
                 }
                 
                 ObjectEditorData obj = current.Value.ConnectedObject;
-                if (_selectedObjNodePairs.ContainsKey(obj))
+                if (_selectedObjects.ContainsKey(obj))
                 {
                     continue;
                 }
 
-                LinkedListNode<ObjectEditorData> newNode = _selectedObjects.AddLast(obj);
-                _selectedObjNodePairs.Add(obj, newNode);
+                _selectedObjects.AddLast(obj, obj);
                 current.Value.Selected = true;
                 selectionRect.AddSelectedObject(current.Value.ConnectedObject.gameObject);
             }
@@ -412,13 +402,12 @@ namespace SansyHuman.TWHG.UI
             for (int i = 0; i < objects.Length; i++)
             {
                 ObjectEditorData obj = objects[i].ConnectedObject;
-                if (!_selectedObjNodePairs.ContainsKey(obj))
+                if (!_selectedObjects.ContainsKey(obj))
                 {
                     continue;
                 }
 
-                _selectedObjects.Remove(_selectedObjNodePairs[obj]);
-                _selectedObjNodePairs.Remove(obj);
+                _selectedObjects.RemoveByKey(_selectedObjects[obj]);
                 objects[i].Selected = false;
                 selectionRect.RemoveSelectedObject(objects[i].ConnectedObject.gameObject);
             }
@@ -428,17 +417,16 @@ namespace SansyHuman.TWHG.UI
         {
             foreach (var obj in _selectedObjects)
             {
-                if (!_objNodePairs.ContainsKey(obj))
+                if (!_objects.ContainsKey(obj))
                 {
                     continue;
                 }
 
-                _objNodePairs[obj].Value.Selected = false;
+                _objects[obj].Selected = false;
                 selectionRect.RemoveSelectedObject(obj.gameObject);
             }
 
             _selectedObjects.Clear();
-            _selectedObjNodePairs.Clear();
         }
 
         private Stack<LinkedListNode<HierarchyObject>> _changeParentTmp = new Stack<LinkedListNode<HierarchyObject>>();
@@ -459,19 +447,18 @@ namespace SansyHuman.TWHG.UI
                 return;
             }
             
-            LinkedListNode<HierarchyObject> childNode = _objNodePairs[child.ConnectedObject];
+            LinkedListNode<HierarchyObject> childNode = _objects.GetNode(child.ConnectedObject);
             LinkedListNode<HierarchyObject> prevChildNode = childNode.Previous;
-            LinkedListNode<HierarchyObject> childLastChildNode = _objNodePairs[child.LastChild ?? child.ConnectedObject];
+            LinkedListNode<HierarchyObject> childLastChildNode = _objects.GetNode(child.LastChild ?? child.ConnectedObject);
 
             if (child.Parent)
             {
-                LinkedListNode<HierarchyObject> parentNode = _objNodePairs[child.Parent];
-                parentNode.Value.RemoveChild(child, !newParent);
+                _objects[child.Parent].RemoveChild(child, !newParent);
             }
             LinkedListNode<HierarchyObject> newPrevChildNode = null;
             if (newParent)
             {
-                newPrevChildNode = _objNodePairs[newParent.LastChild ?? newParent.ConnectedObject];
+                newPrevChildNode = _objects.GetNode(newParent.LastChild ?? newParent.ConnectedObject);
                 newParent.AddChild(child);
             }
             else
@@ -489,7 +476,7 @@ namespace SansyHuman.TWHG.UI
             {
                 LinkedListNode<HierarchyObject> tmp = nextToRemove.Previous;
                 _changeParentTmp.Push(nextToRemove);
-                _objects.Remove(nextToRemove);
+                _objects.RemoveByKey(nextToRemove.Value.ConnectedObject);
                 nextToRemove = tmp;
             } while (nextToRemove != prevChildNode);
 
@@ -497,7 +484,7 @@ namespace SansyHuman.TWHG.UI
             while (_changeParentTmp.Count > 0)
             {
                 LinkedListNode<HierarchyObject> tmp = _changeParentTmp.Pop();
-                _objects.AddAfter(addNextTo, tmp);
+                _objects.AddAfter(addNextTo, tmp.Value.ConnectedObject, tmp);
                 addNextTo = tmp;
             }
 

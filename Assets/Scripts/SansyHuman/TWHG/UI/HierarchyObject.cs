@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SansyHuman.TWHG.Core.Collections;
 using SansyHuman.TWHG.Objects;
 using TMPro;
 using UnityEngine;
@@ -26,9 +27,7 @@ namespace SansyHuman.TWHG.UI
         [SerializeField] private ObjectNameField objectName;
 
         // UI elements of children.
-        private LinkedList<HierarchyObject> _children;
-        // Dictionary for quick search for HierarchyObject connected to the object.
-        private Dictionary<ObjectEditorData, LinkedListNode<HierarchyObject>> _objChildPairs;
+        private IndexedLinkedList<HierarchyObject, ObjectEditorData> _children;
         
         // UI element of parent.
         private HierarchyObject _parent;
@@ -140,8 +139,7 @@ namespace SansyHuman.TWHG.UI
 
         void Awake()
         {
-            _children = new LinkedList<HierarchyObject>();
-            _objChildPairs = new Dictionary<ObjectEditorData, LinkedListNode<HierarchyObject>>();
+            _children = new IndexedLinkedList<HierarchyObject, ObjectEditorData>();
             _parent = null;
             _rectTransform = GetComponent<RectTransform>();
             _layoutGroup = GetComponent<VerticalLayoutGroup>();
@@ -194,7 +192,7 @@ namespace SansyHuman.TWHG.UI
         /// <param name="child">Child UI element.</param>
         public void AddChild(HierarchyObject child)
         {
-            if (_objChildPairs.ContainsKey(child.ConnectedObject))
+            if (_children.ContainsKey(child.ConnectedObject))
             {
                 UnityEngine.Debug.LogWarning("Child " + child.name + " is already in the hierarchy.");
                 return;
@@ -213,8 +211,7 @@ namespace SansyHuman.TWHG.UI
                 expandButton.interactable = true;
                 ExpandButtonUpdate();
             }
-            LinkedListNode<HierarchyObject> newNode = _children.AddLast(child);
-            _objChildPairs.Add(child.ConnectedObject, newNode);
+            _children.AddLast(child.ConnectedObject, child);
             child._parent = this;
             
             child.ConnectedObject.transform.SetParent(ConnectedObject.transform);
@@ -241,9 +238,7 @@ namespace SansyHuman.TWHG.UI
                 child.Depth = 0;
             }
 
-            LinkedListNode<HierarchyObject> childNode = _objChildPairs[child.ConnectedObject];
-            _children.Remove(childNode);
-            _objChildPairs.Remove(child.ConnectedObject);
+            _children.RemoveByKey(child.ConnectedObject);
             if (_children.Count == 0)
             {
                 expandButton.interactable = false;
