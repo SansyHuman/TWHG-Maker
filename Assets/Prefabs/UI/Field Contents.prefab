@@ -636,7 +636,19 @@ MonoBehaviour:
   m_CharacterLimit: 0
   m_OnEndEdit:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 5890858207266963939}
+        m_TargetAssemblyTypeName: SansyHuman.TWHG.UI.FieldContents, Assembly-CSharp
+        m_MethodName: OnEndEdit
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   m_OnSubmit:
     m_PersistentCalls:
       m_Calls: []
@@ -870,6 +882,7 @@ GameObject:
   - component: {fileID: 7418534067664707584}
   - component: {fileID: 4891853120019155809}
   - component: {fileID: 7008099708299534405}
+  - component: {fileID: 5890858207266963939}
   m_Layer: 5
   m_Name: Field Contents
   m_TagString: Untagged
@@ -937,3 +950,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_HorizontalFit: 1
   m_VerticalFit: 1
+--- !u!114 &5890858207266963939
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7618793608699937138}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51db0c5117808dc4abfd799b86c452ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fieldName: {fileID: 3397343459388046903}
+  fieldValue: {fileID: 7959862456390564583}
+  fieldType: 0
+  connectedObject: {fileID: 0}
