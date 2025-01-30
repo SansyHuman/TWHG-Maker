@@ -1,3 +1,4 @@
+using SansyHuman.TWHG.UI;
 using UnityEngine;
 
 namespace SansyHuman.TWHG.Objects
@@ -36,5 +37,10 @@ namespace SansyHuman.TWHG.Objects
 
         [Tooltip("Whether the object can change scale in level editor.")]
         public bool canScale;
+
+        /// <summary>
+        /// Overrides this to add custom field contents to show in the inspector.
+        /// </summary>
+        public virtual FieldContentsBase[] CustomFieldContents => null;
     }
 }

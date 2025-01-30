@@ -4,6 +4,7 @@ using SansyHuman.TWHG.Objects;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 namespace SansyHuman.TWHG.UI
 {
@@ -24,6 +25,9 @@ namespace SansyHuman.TWHG.UI
 
         [Tooltip("The type of the field.")]
         [SerializeField] private FieldType fieldType;
+
+        [Tooltip("The button to expand the subfields if the type is struct.")]
+        [SerializeField] private Button expandButton;
 
         [Tooltip("Object connected to this field.")]
         [SerializeField] private ObjectEditorData connectedObject;
@@ -48,13 +52,19 @@ namespace SansyHuman.TWHG.UI
         // Subfields if the field type is struct.
         private IndexedLinkedList<FieldContentsBase, FieldContentsBase> _structFields;
 
-        /// <summary>
-        /// Gets and sets the connected object.
-        /// </summary>
-        public ObjectEditorData ConnectedObject
+        private bool _structExpanded;
+
+        public override ObjectEditorData ConnectedObject
         {
             get => connectedObject;
-            set => connectedObject = value;
+            set
+            {
+                connectedObject = value;
+                foreach (var subfields in _structFields)
+                {
+                    subfields.ConnectedObject = value;
+                }
+            }
         }
 
         public override bool IsReadOnly
@@ -66,6 +76,9 @@ namespace SansyHuman.TWHG.UI
         void Awake()
         {
             _structFields = new IndexedLinkedList<FieldContentsBase, FieldContentsBase>();
+            expandButton.interactable = false;
+            _structExpanded = true;
+            ExpandButtonUpdate();
         }
 
         private void Update()
@@ -80,14 +93,40 @@ namespace SansyHuman.TWHG.UI
             }
         }
 
+        public void OnExpandButtonClick()
+        {
+            _structExpanded = !_structExpanded;
+            ExpandButtonUpdate();
+            foreach (var subfields in _structFields)
+            {
+                subfields.gameObject.SetActive(_structExpanded);
+            }
+        }
+
+        private void ExpandButtonUpdate()
+        {
+            RectTransform buttonTr = expandButton.GetComponent<RectTransform>();
+            Quaternion rotation = buttonTr.rotation;
+            rotation.eulerAngles = new Vector3(0, 0, _structExpanded ? -180 : -90);
+            buttonTr.rotation = rotation;
+        }
+
+        /// <summary>
+        /// Sets field type and resets ConnectedObject to null.
+        /// </summary>
+        /// <param name="fieldType">Type of the field.</param>
+        /// <param name="fieldReadAction">Delegate to read field value from the object.</param>
+        /// <param name="fieldWriteAction">Delegate to write to field of the object.</param>
         public void SetFieldType(FieldType fieldType, ReadAction fieldReadAction,
             WriteAction fieldWriteAction)
         {
             this.fieldType = fieldType;
             _readAction = fieldReadAction;
             _writeAction = fieldWriteAction;
+            ConnectedObject = null;
 
             fieldValue.gameObject.SetActive(true);
+            expandButton.interactable = false;
             switch (fieldType)
             {
                 case FieldType.SByte:
@@ -109,15 +148,39 @@ namespace SansyHuman.TWHG.UI
                     break;
                 case FieldType.Struct:
                     fieldValue.gameObject.SetActive(false);
+                    expandButton.interactable = true;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(fieldType), fieldType, null);
             }
         }
+
+        /// <summary>
+        /// Changes the field type to struct and adds subfields to the field(internal use only).
+        /// </summary>
+        /// <param name="subfields">Subfields to add.</param>
+        public void AddSubfields(params FieldContentsBase[] subfields)
+        {
+            if (subfields.Length == 0)
+            {
+                return;
+            }
+
+            if (fieldType != FieldType.Struct)
+            {
+                SetFieldType(FieldType.Struct, null, null);
+            }
+
+            for (int i = 0; i < subfields.Length; i++)
+            {
+                _structFields.AddLast(subfields[i], subfields[i]);
+                subfields[i].transform.SetParent(transform);
+                subfields[i].ConnectedObject = connectedObject;
+            }
+        }
         
         public void OnEndEdit(string fieldContent)
         {
-            UnityEngine.Debug.Log(fieldContent);
             if (fieldType != FieldType.Struct && connectedObject)
             {
                 _writeAction(connectedObject, ParseValue(fieldContent));
@@ -153,6 +216,16 @@ namespace SansyHuman.TWHG.UI
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+        }
+
+        public override void AddRefreshListener(UnityAction callback)
+        {
+            expandButton.onClick.AddListener(callback);
+        }
+
+        public override void RemoveRefreshListener(UnityAction callback)
+        {
+            expandButton.onClick.RemoveListener(callback);
         }
     }
 }
