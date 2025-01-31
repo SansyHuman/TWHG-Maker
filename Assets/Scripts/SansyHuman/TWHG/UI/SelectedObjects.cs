@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SansyHuman.TWHG.Core.Collections;
 using Unity.Collections;
 using UnityEngine;
 
@@ -19,7 +20,7 @@ namespace SansyHuman.TWHG.UI
         [SerializeField] private LineRenderer rightSide;
         [SerializeField] private LineRenderer bottomSide;
         
-        private HashSet<GameObject> _selectedObjects;
+        private IndexedLinkedList<SpriteRenderer, GameObject> _selectedObjects;
         private Vector2 _minPos;
         private Vector2 _maxPos;
         
@@ -27,11 +28,16 @@ namespace SansyHuman.TWHG.UI
         void Awake()
         {
             SetEnabled(false);
-            _selectedObjects = new HashSet<GameObject>();
+            _selectedObjects = new IndexedLinkedList<SpriteRenderer, GameObject>();
             _minPos = new Vector2(0, 0);
             _maxPos = new Vector2(0, 0);
 
             transform.position = Vector3.zero;
+        }
+
+        void Update()
+        {
+            UpdateBox();
         }
 
         /// <summary>
@@ -40,13 +46,14 @@ namespace SansyHuman.TWHG.UI
         /// <param name="selectedObject">Object selected.</param>
         public void AddSelectedObject(GameObject selectedObject)
         {
-            if (_selectedObjects.Contains(selectedObject))
+            if (_selectedObjects.ContainsKey(selectedObject))
             {
                 UnityEngine.Debug.LogWarning("Selected object already added: " + selectedObject.name);
                 return;
             }
             
-            _selectedObjects.Add(selectedObject);
+            SpriteRenderer sprite = selectedObject.GetComponent<SpriteRenderer>();
+            _selectedObjects.AddLast(selectedObject, sprite);
             UpdateBox();
         }
 
@@ -56,13 +63,13 @@ namespace SansyHuman.TWHG.UI
         /// <param name="selectedObject">Object deselected.</param>
         public void RemoveSelectedObject(GameObject selectedObject)
         {
-            if (!_selectedObjects.Contains(selectedObject))
+            if (!_selectedObjects.ContainsKey(selectedObject))
             {
                 UnityEngine.Debug.LogWarning("Selected object not selected: " + selectedObject.name);
                 return;
             }
-            
-            _selectedObjects.Remove(selectedObject);
+
+            _selectedObjects.RemoveByKey(selectedObject);
             UpdateBox();
         }
 
@@ -82,7 +89,7 @@ namespace SansyHuman.TWHG.UI
             _minPos = new Vector2(float.MaxValue, float.MaxValue);
             _maxPos = new Vector2(float.MinValue, float.MinValue);
 
-            foreach (var obj in _selectedObjects)
+            foreach (var obj in _selectedObjects.Keys)
             {
                 Bounds bounds = GetBoundingBox(obj);
                 Vector2 boundsMin = bounds.min;
@@ -146,7 +153,7 @@ namespace SansyHuman.TWHG.UI
 
         private Bounds GetBoundingBox(GameObject obj)
         {
-            SpriteRenderer sprite = obj.GetComponent<SpriteRenderer>();
+            SpriteRenderer sprite = _selectedObjects[obj];
             if (!sprite)
             {
                 return new Bounds(obj.transform.position, Vector3.one);

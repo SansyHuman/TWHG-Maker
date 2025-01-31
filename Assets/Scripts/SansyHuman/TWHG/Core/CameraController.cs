@@ -41,11 +41,26 @@ namespace SansyHuman.TWHG.Core
             _cameraComponent = GetComponent<Camera>();
         }
 
-        // Update is called once per frame
+        private bool _ignoreInput = false;
         void Update()
         {
             // Ignore input if the pointer is on UI.
+            if (_actions.Editor.ScreenClick.WasReleasedThisFrame())
+            {
+                _ignoreInput = false;
+            }
+            
             if (EventSystem.current.IsPointerOverGameObject())
+            {
+                if (_actions.Editor.ScreenClick.WasPressedThisFrame())
+                {
+                    _ignoreInput = true;
+                }
+
+                return;
+            }
+
+            if (_ignoreInput)
             {
                 return;
             }
