@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using SansyHuman.TWHG.Core.Collections;
 using SansyHuman.TWHG.Objects;
 using TMPro;
@@ -50,7 +51,7 @@ namespace SansyHuman.TWHG.UI
         private WriteAction _writeAction;
         
         // Subfields if the field type is struct.
-        private IndexedLinkedList<FieldContentsBase, FieldContentsBase> _structFields;
+        private IndexedLinkedList<FieldContentsBase, string> _structFields;
 
         private bool _structExpanded;
 
@@ -73,9 +74,29 @@ namespace SansyHuman.TWHG.UI
             set => fieldValue.readOnly = value;
         }
 
+        /// <summary>
+        /// Gets a subfield in this field.
+        /// </summary>
+        /// <param name="name">Name of the field used in AddSubfields.</param>
+        /// <returns>Subfield. Null if does not exist.</returns>
+        public FieldContentsBase GetSubfield(string name)
+        {
+            if (!_structFields.ContainsKey(name))
+            {
+                return null;
+            }
+            
+            return _structFields[name];
+        }
+
+        /// <summary>
+        /// Gets names of all subfields.
+        /// </summary>
+        public IEnumerable<string> SubfieldNames => _structFields.Keys;
+
         void Awake()
         {
-            _structFields = new IndexedLinkedList<FieldContentsBase, FieldContentsBase>();
+            _structFields = new IndexedLinkedList<FieldContentsBase, string>();
             expandButton.interactable = false;
             _structExpanded = true;
             ExpandButtonUpdate();
@@ -158,8 +179,8 @@ namespace SansyHuman.TWHG.UI
         /// <summary>
         /// Changes the field type to struct and adds subfields to the field(internal use only).
         /// </summary>
-        /// <param name="subfields">Subfields to add.</param>
-        public void AddSubfields(params FieldContentsBase[] subfields)
+        /// <param name="subfields">Subfields and their name to add. Name is used to get subfields.</param>
+        public void AddSubfields(params (FieldContentsBase field, string name)[] subfields)
         {
             if (subfields.Length == 0)
             {
@@ -173,9 +194,9 @@ namespace SansyHuman.TWHG.UI
 
             for (int i = 0; i < subfields.Length; i++)
             {
-                _structFields.AddLast(subfields[i], subfields[i]);
-                subfields[i].transform.SetParent(transform);
-                subfields[i].ConnectedObject = connectedObject;
+                _structFields.AddLast(subfields[i].name, subfields[i].field);
+                subfields[i].field.transform.SetParent(transform);
+                subfields[i].field.ConnectedObject = connectedObject;
             }
         }
         

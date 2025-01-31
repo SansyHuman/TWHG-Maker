@@ -24,13 +24,33 @@ namespace SansyHuman.TWHG.UI
         [SerializeField] private Vector3FieldContents vector3FieldPrefab;
 
         // All primary fields.
-        private IndexedLinkedList<FieldContentsBase, FieldContentsBase> _fields;
+        private IndexedLinkedList<FieldContentsBase, string> _fields;
 
         [SerializeField] private ObjectEditorData selectedObject;
 
+        public ObjectEditorData SelectedObject
+        {
+            get => selectedObject;
+            set
+            {
+                selectedObject = value;
+
+                FieldContents transformField = (FieldContents)_fields["transform"];
+                transformField.ConnectedObject = selectedObject;
+                transformField.gameObject.SetActive(selectedObject);
+                if (selectedObject)
+                {
+                    transformField.GetSubfield("position").IsReadOnly = !selectedObject.canMove;
+                    transformField.GetSubfield("rotation").IsReadOnly = !selectedObject.canRotate;
+                    transformField.GetSubfield("scale").IsReadOnly = !selectedObject.canScale;
+                }
+                Refresh();
+            }
+        }
+
         void Awake()
         {
-            _fields = new IndexedLinkedList<FieldContentsBase, FieldContentsBase>();
+            _fields = new IndexedLinkedList<FieldContentsBase, string>();
         }
 
         void Start()
@@ -40,7 +60,7 @@ namespace SansyHuman.TWHG.UI
             FieldContents transformField = CreateField(defaultFieldPrefab, inspectorWindow);
             transformField.FieldName = "Transform";
             transformField.SetFieldType(FieldContents.FieldType.Struct, null, null);
-            _fields.AddLast(transformField, transformField);
+            _fields.AddLast("transform", transformField);
             
             Vector2FieldContents positionField = CreateField(vector2FieldPrefab, transformField.transform);
             positionField.FieldName = "Position";
@@ -71,9 +91,11 @@ namespace SansyHuman.TWHG.UI
                     obj.transform.localEulerAngles = eulerAngles;
                 });
             
-            transformField.AddSubfields(positionField, scaleField, rotationField);
+            transformField.AddSubfields((positionField, "position"), (scaleField, "scale"), (rotationField, "rotation"));
             
             transformField.ConnectedObject = selectedObject;
+            
+            transformField.gameObject.SetActive(false);
 
             Refresh();
         }

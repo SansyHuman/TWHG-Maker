@@ -174,11 +174,12 @@ MonoBehaviour:
   gizmoIcon: {fileID: 0}
   gizmoSize: {x: 0, y: 0}
   selectable: 1
+  destroyable: 1
   canHaveParent: 1
   canHaveChildren: 1
-  canMove: 0
-  canRotate: 0
-  canScale: 0
+  canMove: 1
+  canRotate: 1
+  canScale: 1
 --- !u!212 &43572864
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -512,11 +513,12 @@ MonoBehaviour:
   gizmoIcon: {fileID: 0}
   gizmoSize: {x: 0, y: 0}
   selectable: 0
+  destroyable: 1
   canHaveParent: 1
   canHaveChildren: 1
-  canMove: 0
-  canRotate: 0
-  canScale: 0
+  canMove: 1
+  canRotate: 1
+  canScale: 1
 --- !u!212 &388067716
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -791,11 +793,12 @@ MonoBehaviour:
   gizmoIcon: {fileID: 0}
   gizmoSize: {x: 0, y: 0}
   selectable: 1
+  destroyable: 1
   canHaveParent: 1
   canHaveChildren: 1
-  canMove: 0
-  canRotate: 0
-  canScale: 0
+  canMove: 1
+  canRotate: 1
+  canScale: 1
 --- !u!212 &559944583
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -1109,11 +1112,12 @@ MonoBehaviour:
   gizmoIcon: {fileID: 0}
   gizmoSize: {x: 0, y: 0}
   selectable: 1
+  destroyable: 1
   canHaveParent: 1
   canHaveChildren: 1
-  canMove: 0
-  canRotate: 0
-  canScale: 0
+  canMove: 1
+  canRotate: 1
+  canScale: 1
 --- !u!212 &810922157
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -1201,11 +1205,12 @@ MonoBehaviour:
   gizmoIcon: {fileID: 0}
   gizmoSize: {x: 0, y: 0}
   selectable: 1
+  destroyable: 1
   canHaveParent: 1
   canHaveChildren: 1
-  canMove: 0
-  canRotate: 0
-  canScale: 0
+  canMove: 1
+  canRotate: 1
+  canScale: 1
 --- !u!212 &917646375
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -1399,6 +1404,7 @@ MonoBehaviour:
   gizmoIcon: {fileID: 0}
   gizmoSize: {x: 0, y: 0}
   selectable: 1
+  destroyable: 1
   canHaveParent: 0
   canHaveChildren: 1
   canMove: 0
@@ -1508,11 +1514,12 @@ MonoBehaviour:
   gizmoIcon: {fileID: 0}
   gizmoSize: {x: 0, y: 0}
   selectable: 1
+  destroyable: 0
   canHaveParent: 1
   canHaveChildren: 1
-  canMove: 0
-  canRotate: 0
-  canScale: 0
+  canMove: 1
+  canRotate: 1
+  canScale: 1
 --- !u!212 &1699695334
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -1615,11 +1622,12 @@ MonoBehaviour:
   gizmoIcon: {fileID: 0}
   gizmoSize: {x: 0, y: 0}
   selectable: 1
+  destroyable: 1
   canHaveParent: 1
   canHaveChildren: 0
-  canMove: 0
-  canRotate: 0
-  canScale: 0
+  canMove: 1
+  canRotate: 1
+  canScale: 1
 --- !u!212 &1934141433
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -1707,11 +1715,12 @@ MonoBehaviour:
   gizmoIcon: {fileID: 0}
   gizmoSize: {x: 0, y: 0}
   selectable: 0
+  destroyable: 1
   canHaveParent: 1
   canHaveChildren: 1
-  canMove: 0
-  canRotate: 0
-  canScale: 0
+  canMove: 1
+  canRotate: 1
+  canScale: 1
 --- !u!212 &1948404315
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -1831,11 +1840,12 @@ MonoBehaviour:
   gizmoIcon: {fileID: 0}
   gizmoSize: {x: 0, y: 0}
   selectable: 1
+  destroyable: 1
   canHaveParent: 1
   canHaveChildren: 1
-  canMove: 0
-  canRotate: 0
-  canScale: 0
+  canMove: 1
+  canRotate: 1
+  canScale: 1
 --- !u!212 &2021815811
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -2045,6 +2055,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0a15390ce8c41624f87bb7d2afbfcbed, type: 3}
+--- !u!114 &514560815633069252 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7247033060140452788, guid: 0a15390ce8c41624f87bb7d2afbfcbed, type: 3}
+  m_PrefabInstance: {fileID: 514560815633069251}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b92cdd2bab58e5f4ca627174200bda29, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &3623036278388308221
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2197,6 +2218,10 @@ PrefabInstance:
       propertyPath: selectionRect
       value: 
       objectReference: {fileID: 1365714241}
+    - target: {fileID: 6892938673596828855, guid: 2884f2f0e2ea99149b817ef2bce1e77e, type: 3}
+      propertyPath: inspectorWindow
+      value: 
+      objectReference: {fileID: 514560815633069252}
     - target: {fileID: 7252211633024441958, guid: 2884f2f0e2ea99149b817ef2bce1e77e, type: 3}
       propertyPath: m_Value
       value: 0

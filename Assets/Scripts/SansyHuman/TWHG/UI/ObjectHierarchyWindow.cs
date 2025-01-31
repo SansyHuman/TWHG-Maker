@@ -27,6 +27,9 @@ namespace SansyHuman.TWHG.UI
 
         [Tooltip("Prefab for UI element of object in hierarchy window.")]
         [SerializeField] private HierarchyObject objectPrefab;
+        
+        [Tooltip("Inspector window of the editor.")]
+        [SerializeField] private InspectorWindow inspectorWindow;
 
         // Objects in the hierarchy window in the order of UI elements.
         private IndexedLinkedList<HierarchyObject, ObjectEditorData> _objects;
@@ -107,6 +110,11 @@ namespace SansyHuman.TWHG.UI
             if (!_objects.ContainsKey(obj))
             {
                 UnityEngine.Debug.LogWarning($"The object {obj.name} does not exist.");
+                return;
+            }
+
+            if (!obj.destroyable)
+            {
                 return;
             }
 
@@ -334,9 +342,12 @@ namespace SansyHuman.TWHG.UI
         
         private void OnDeletePressed(InputAction.CallbackContext context)
         {
-            while (_selectedObjects.Count > 0)
+            ObjectEditorData[] objToDelete = new ObjectEditorData[_selectedObjects.Count];
+            _selectedObjects.CopyTo(objToDelete, 0);
+
+            for (int i = 0; i < objToDelete.Length; i++)
             {
-                DestroyObject(_selectedObjects.First.Value);
+                DestroyObject(objToDelete[i]);
             }
         }
 
@@ -364,6 +375,8 @@ namespace SansyHuman.TWHG.UI
                 objects[i].Selected = true;
                 selectionRect.AddSelectedObject(objects[i].ConnectedObject.gameObject);
             }
+
+            UpdateInspector();
         }
         
         private void AddSelectedObjects(LinkedListNode<HierarchyObject> first, LinkedListNode<HierarchyObject> last)
@@ -395,6 +408,8 @@ namespace SansyHuman.TWHG.UI
                 current.Value.Selected = true;
                 selectionRect.AddSelectedObject(current.Value.ConnectedObject.gameObject);
             }
+            
+            UpdateInspector();
         }
 
         private void RemoveSelectedObjects(params HierarchyObject[] objects)
@@ -411,6 +426,8 @@ namespace SansyHuman.TWHG.UI
                 objects[i].Selected = false;
                 selectionRect.RemoveSelectedObject(objects[i].ConnectedObject.gameObject);
             }
+            
+            UpdateInspector();
         }
 
         private void ClearSelectedObjects()
@@ -427,6 +444,20 @@ namespace SansyHuman.TWHG.UI
             }
 
             _selectedObjects.Clear();
+            
+            UpdateInspector();
+        }
+
+        private void UpdateInspector()
+        {
+            if (_selectedObjects.Count == 1)
+            {
+                inspectorWindow.SelectedObject = _selectedObjects.First.Value;
+            }
+            else
+            {
+                inspectorWindow.SelectedObject = null;
+            }
         }
 
         private Stack<LinkedListNode<HierarchyObject>> _changeParentTmp = new Stack<LinkedListNode<HierarchyObject>>();

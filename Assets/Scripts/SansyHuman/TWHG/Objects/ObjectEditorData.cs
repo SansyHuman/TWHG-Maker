@@ -21,22 +21,25 @@ namespace SansyHuman.TWHG.Objects
         public Vector2 gizmoSize;
 
         [Tooltip("Whether the object is selectable in level editor.")]
-        public bool selectable;
+        public bool selectable = true;
+
+        [Tooltip("Whether the object is destroyable in level editor.")]
+        public bool destroyable = true;
 
         [Tooltip("Whether the object can have a parent.")]
-        public bool canHaveParent;
+        public bool canHaveParent = true;
         
         [Tooltip("Whether the object can have children.")]
-        public bool canHaveChildren;
+        public bool canHaveChildren = true;
 
         [Tooltip("Whether the object can move in level editor.")]
-        public bool canMove;
+        public bool canMove = true;
 
         [Tooltip("Whether the object can rotate in level editor.")]
-        public bool canRotate;
+        public bool canRotate = true;
 
         [Tooltip("Whether the object can change scale in level editor.")]
-        public bool canScale;
+        public bool canScale = true;
 
         /// <summary>
         /// Overrides this to add custom field contents to show in the inspector.
