@@ -177,6 +177,70 @@ namespace SansyHuman.TWHG.UI
         }
 
         /// <summary>
+        /// Converts Type to FieldType.
+        /// </summary>
+        /// <param name="type">Type to convert</param>
+        public static FieldType TypeToFieldType(Type type)
+        {
+            if (type == typeof(sbyte))
+            {
+                return FieldType.SByte;
+            }
+            
+            if (type == typeof(byte))
+            {
+                return FieldType.Byte;
+            }
+            
+            if (type == typeof(short))
+            {
+                return FieldType.Short;
+            }
+            
+            if (type == typeof(ushort))
+            {
+                return FieldType.UShort;
+            }
+            
+            if (type == typeof(int))
+            {
+                return FieldType.Int;
+            }
+            
+            if (type == typeof(uint))
+            {
+                return FieldType.UInt;
+            }
+            
+            if (type == typeof(long))
+            {
+                return FieldType.Long;
+            }
+            
+            if (type == typeof(ulong))
+            {
+                return FieldType.ULong;
+            }
+            
+            if (type == typeof(float))
+            {
+                return FieldType.Float;
+            }
+            
+            if (type == typeof(double))
+            {
+                return FieldType.Double;
+            }
+            
+            if (type == typeof(string))
+            {
+                return FieldType.String;
+            }
+
+            return (FieldType)(-1);
+        }
+
+        /// <summary>
         /// Changes the field type to struct and adds subfields to the field(internal use only).
         /// </summary>
         /// <param name="subfields">Subfields and their name to add. Name is used to get subfields.</param>
@@ -233,7 +297,7 @@ namespace SansyHuman.TWHG.UI
                 case FieldType.Double:
                     return double.Parse(value);
                 case FieldType.String:
-                    return fieldValue;
+                    return value;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
