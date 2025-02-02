@@ -142,6 +142,8 @@ namespace SansyHuman.TWHG.UI
             
             Destroy(objUi.ConnectedObject.gameObject);
             Destroy(objUi.gameObject);
+
+            UpdateInspector();
             
             Refresh();
         }
@@ -243,6 +245,8 @@ namespace SansyHuman.TWHG.UI
                     AddSelectedObjects(nameField.ObjectUI);
                 }
             }
+
+            UpdateInspector();
         }
 
         private void OnObjectPointerUp(ObjectNameField nameField)
@@ -303,6 +307,8 @@ namespace SansyHuman.TWHG.UI
             _ctrlPressed = false;
             _shiftPressed = false;
             _lastPointedFieldAlreadySelected = false;
+
+            UpdateInspector();
         }
 
         private void OnScrollRectPointerDown()
@@ -311,6 +317,8 @@ namespace SansyHuman.TWHG.UI
             ClearSelectedObjects();
             _lastPointedField = null;
             _lastSelectedObject = null;
+
+            UpdateInspector();
         }
 
         private void OnScrollRectPointerUp()
@@ -375,8 +383,6 @@ namespace SansyHuman.TWHG.UI
                 objects[i].Selected = true;
                 selectionRect.AddSelectedObject(objects[i].ConnectedObject.gameObject);
             }
-
-            UpdateInspector();
         }
         
         private void AddSelectedObjects(LinkedListNode<HierarchyObject> first, LinkedListNode<HierarchyObject> last)
@@ -408,8 +414,6 @@ namespace SansyHuman.TWHG.UI
                 current.Value.Selected = true;
                 selectionRect.AddSelectedObject(current.Value.ConnectedObject.gameObject);
             }
-            
-            UpdateInspector();
         }
 
         private void RemoveSelectedObjects(params HierarchyObject[] objects)
@@ -426,8 +430,6 @@ namespace SansyHuman.TWHG.UI
                 objects[i].Selected = false;
                 selectionRect.RemoveSelectedObject(objects[i].ConnectedObject.gameObject);
             }
-            
-            UpdateInspector();
         }
 
         private void ClearSelectedObjects()
@@ -444,8 +446,6 @@ namespace SansyHuman.TWHG.UI
             }
 
             _selectedObjects.Clear();
-            
-            UpdateInspector();
         }
 
         private void UpdateInspector()

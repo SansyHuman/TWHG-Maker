@@ -58,7 +58,6 @@ namespace SansyHuman.TWHG.UI
                 selectedObject = value;
 
                 FieldContents transformField = (FieldContents)_fields["transform"];
-                transformField.ConnectedObject = selectedObject;
                 transformField.gameObject.SetActive(selectedObject);
                 if (selectedObject)
                 {
@@ -68,6 +67,11 @@ namespace SansyHuman.TWHG.UI
                 }
 
                 BuildInspector(selectedObject, oldType);
+                foreach (var field in _fields)
+                {
+                    field.ConnectedObject = selectedObject;
+                }
+                
                 Refresh();
             }
         }
@@ -154,7 +158,6 @@ namespace SansyHuman.TWHG.UI
                 
                 field.FieldName = inspectables[i].FieldInfo.Name;
                 field.IsReadOnly = inspectables[i].ReadOnly;
-                field.ConnectedObject = obj;
 
                 _fields.AddLast(field.FieldName, field);
             }
@@ -176,10 +179,10 @@ namespace SansyHuman.TWHG.UI
                 }
                 
                 Inspectable inspectable = new Inspectable();
+                inspectable.FieldInfo = fields[i];
                 if (_inspectableTypes.Contains(fields[i].FieldType))
                 {
                     inspectable.Type = Inspectable.FieldType.Simple;
-                    inspectable.FieldInfo = fields[i];
                 }
                 else if (fields[i].FieldType.IsStruct())
                 {

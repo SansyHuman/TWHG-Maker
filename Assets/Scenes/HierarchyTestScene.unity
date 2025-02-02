@@ -1044,7 +1044,7 @@ MonoBehaviour:
   - {fileID: 559944582}
   - {fileID: 2021815810}
   - {fileID: 388067715}
-  - {fileID: 810922156}
+  - {fileID: 810922158}
   - {fileID: 1934141432}
   hierarchyWindow: {fileID: 3623036278388308222}
 --- !u!4 &640933715
@@ -1072,7 +1072,7 @@ GameObject:
   m_Component:
   - component: {fileID: 810922155}
   - component: {fileID: 810922157}
-  - component: {fileID: 810922156}
+  - component: {fileID: 810922158}
   m_Layer: 0
   m_Name: Square (7)
   m_TagString: Untagged
@@ -1095,29 +1095,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 917646376}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &810922156
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 810922154}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1b3195f5dcf8648499df1cdb532be9e9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  editorBrushIcon: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  hasGizmo: 0
-  gizmoIcon: {fileID: 0}
-  gizmoSize: {x: 0, y: 0}
-  selectable: 1
-  destroyable: 1
-  canHaveParent: 1
-  canHaveChildren: 1
-  canMove: 1
-  canRotate: 1
-  canScale: 1
 --- !u!212 &810922157
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -1170,6 +1147,31 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &810922158
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 810922154}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8287d77826f2e542819578265e49ebc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  editorBrushIcon: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  hasGizmo: 0
+  gizmoIcon: {fileID: 0}
+  gizmoSize: {x: 0, y: 0}
+  selectable: 1
+  destroyable: 1
+  canHaveParent: 1
+  canHaveChildren: 1
+  canMove: 1
+  canRotate: 1
+  canScale: 1
+  int2: 0
+  string1: 
 --- !u!1 &886431527
 GameObject:
   m_ObjectHideFlags: 0
@@ -1400,6 +1402,7 @@ MonoBehaviour:
   canMove: 1
   canRotate: 1
   canScale: 1
+  int2: 0
   string1: 
 --- !u!1 &950480464
 GameObject:
