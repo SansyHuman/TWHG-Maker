@@ -71,7 +71,14 @@ namespace SansyHuman.TWHG.UI
         public override bool IsReadOnly
         {
             get => fieldValue.readOnly;
-            set => fieldValue.readOnly = value;
+            set
+            {
+                fieldValue.readOnly = value;
+                foreach (var subfields in _structFields)
+                {
+                    subfields.IsReadOnly = value;
+                }
+            }
         }
 
         /// <summary>
