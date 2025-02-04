@@ -1172,6 +1172,8 @@ MonoBehaviour:
   canScale: 1
   int2: 0
   string1: 
+  _customFields:
+  - {fileID: 6860722329850047439, guid: 98396e33d82cc6346845f4a0963d1726, type: 3}
 --- !u!1 &886431527
 GameObject:
   m_ObjectHideFlags: 0
@@ -1404,6 +1406,8 @@ MonoBehaviour:
   canScale: 1
   int2: 0
   string1: 
+  _customFields:
+  - {fileID: 6860722329850047439, guid: 98396e33d82cc6346845f4a0963d1726, type: 3}
 --- !u!1 &950480464
 GameObject:
   m_ObjectHideFlags: 0

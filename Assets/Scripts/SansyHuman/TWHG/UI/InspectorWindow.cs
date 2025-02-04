@@ -125,6 +125,18 @@ namespace SansyHuman.TWHG.UI
 
                 _fields.AddLast(field.FieldName, field);
             }
+
+            FieldContentsBase[] customFields = obj.CustomFieldContents;
+            if (customFields == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < customFields.Length; i++)
+            {
+                FieldContentsBase field = CreateField(customFields[i], inspectorWindow);
+                _fields.AddLast(field.FieldName, field);
+            }
         }
 
         private FieldContentsBase BuildSimpleField(in Inspectable inspectable, Transform parent, FieldContents.ReadAction parentObjectReader = null, FieldContents.WriteAction parentObjectWriter = null)

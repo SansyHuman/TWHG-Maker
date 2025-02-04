@@ -15,6 +15,10 @@ namespace SansyHuman.TWHG.Debug
         [Inspectable] private float float1;
         [Inspectable] public string string1;
         [Inspectable] private TestStruct1 testStruct1;
+
+        [SerializeField] private FieldContentsBase[] _customFields;
+        
+        public override FieldContentsBase[] CustomFieldContents => _customFields;
     }
 
     [Serializable]

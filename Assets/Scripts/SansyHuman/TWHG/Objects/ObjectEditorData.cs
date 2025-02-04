@@ -42,7 +42,8 @@ namespace SansyHuman.TWHG.Objects
         public bool canScale = true;
 
         /// <summary>
-        /// Overrides this to add custom field contents to show in the inspector.
+        /// Overrides this to add custom field contents to show in the inspector. Same type of object should
+        /// return same field contents.
         /// </summary>
         public virtual FieldContentsBase[] CustomFieldContents => null;
     }
